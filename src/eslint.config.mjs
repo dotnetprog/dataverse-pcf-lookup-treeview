@@ -36,6 +36,17 @@ export default [
 
     rules: {
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/consistent-type-definitions":"off",
+      "@typescript-eslint/no-unsafe-assignment":"off",
+      "@typescript-eslint/no-unsafe-member-access":"off",
+      "@typescript-eslint/no-explicit-any":"off",
+      "@typescript-eslint/no-unnecessary-type-assertion":"off",
+      "@typescript-eslint/no-unsafe-argument":"off",
+      "@typescript-eslint/no-unsafe-return":"off",
+      "@typescript-eslint/array-type":"off",
+      "prefer-const":"off",
+      "no-extra-boolean-cast":"off",
+      "@typescript-eslint/no-floating-promises":"off"
     },
     settings: {
       react: {

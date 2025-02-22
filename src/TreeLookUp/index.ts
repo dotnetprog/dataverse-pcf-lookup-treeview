@@ -1,5 +1,5 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { HelloWorld, IHelloWorldProps } from "./HelloWorld";
+import { XrmContext } from "./components/XrmContextProvider";
 import * as React from "react";
 import { ContextRecordService, FakeRecordService, IRecordService } from "./services/recordService";
 import { ILookuptreeProps, Lookuptree } from "./components/Lookuptree";
@@ -33,8 +33,9 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
         notifyOutputChanged: () => void,
         state: ComponentFramework.Dictionary
     ): void {
+        const userPagingLimit = (context.userSettings as any).pagingLimit ?? this._defaultPagingSize;
         this._recordService = this.isLocalEnvironment() ?
-         new ContextRecordService(context.webAPI,this._defaultPagingSize) :
+         new ContextRecordService(context.webAPI,userPagingLimit) :
          new FakeRecordService();
         this.notifyOutputChanged = notifyOutputChanged;
     }
@@ -69,7 +70,7 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
             preSearch:'',
             onValueChange: this.onValueChangedFromControl.bind(this)
         };
-       return React.createElement(Lookuptree, props);
+       return React.createElement(XrmContext.Provider,{value:context},React.createElement(Lookuptree, props));
     }
 
     /**

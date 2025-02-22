@@ -2,6 +2,9 @@ import { InteractionTag, InteractionTagPrimary, InteractionTagSecondary } from "
 import * as React from "react";
 import { useState } from "react";
 import { SearchButton } from "./SearchButton";
+import { TreeSelectionDialog } from "./TreeSelectionDialog";
+import { FluentProvider, webLightTheme } from '@fluentui/react-components';
+import { XrmContext } from "./XrmContextProvider";
 
 export interface ILookuptreeProps {
     entityName:string,
@@ -16,6 +19,15 @@ const defaultValue = {
     entityType:undefined,
     name:undefined
 }
+const containerStyles:React.CSSProperties = {
+    width:'100%',
+    display:'flex',
+    backgroundColor:'rgb(245, 245, 245)',
+    height:'32px'
+ };
+ const btnStyles:React.CSSProperties = {
+    marginRight:'4px'
+ };
 export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) => {
     const [recordReference,setRecordReference] = useState({id:props.currentrecord?.id,name:props.currentrecord?.name,entityType:props.currentrecord?.entityType});
     if(recordReference.id !== props.currentrecord?.id){
@@ -28,21 +40,26 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
         setRecordReference(defaultValue);
         props.onValueChange(null);
     };
-    const selectLookUpValue = () => {
-        console.log('record selection called.');
-    };
-    
+
+    let cstyle = {...containerStyles};
+    if(recordReference?.id === undefined){
+        cstyle.paddingInlineStart = '10px';
+    }
     return (
-    <div>
-        {recordReference?.id !== undefined &&
-        <InteractionTag value={recordReference?.id} key={recordReference?.id} appearance="brand">
-            <InteractionTagPrimary onClick={openSelectedRecord}>{recordReference?.name}</InteractionTagPrimary>    
-            <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />
-        </InteractionTag>}
-        {recordReference?.id == undefined && "---"
-        }
-        <SearchButton onClick={selectLookUpValue} />
-    </div>
+     <FluentProvider style={{width:'100%'}} theme={webLightTheme}>
+        <div style={cstyle}>
+            {recordReference?.id !== undefined &&
+            <InteractionTag style={{width:'100%'}} value={recordReference?.id} key={recordReference?.id} appearance="brand">
+                <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{recordReference?.name}</InteractionTagPrimary>    
+                <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />
+            </InteractionTag>}
+            {recordReference?.id == undefined && <div style={{width:'100%'}}> ---</div>
+            }
+            <SearchButton style={btnStyles}  />
+        </div>
+    </FluentProvider>
+    
+    
     )
       
 };  
