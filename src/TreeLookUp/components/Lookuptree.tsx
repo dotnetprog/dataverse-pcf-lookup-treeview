@@ -5,6 +5,7 @@ import { SearchButton } from "./SearchButton";
 import { TreeSelectionDialog } from "./TreeSelectionDialog";
 import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { XrmContext } from "./XrmContextProvider";
+import { useXrm } from "../hooks/xrm.hooks";
 
 export interface ILookuptreeProps {
     entityName:string,
@@ -29,21 +30,32 @@ const containerStyles:React.CSSProperties = {
     marginRight:'4px'
  };
 export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) => {
+    const xrmContext = useXrm();
     const [recordReference,setRecordReference] = useState({id:props.currentrecord?.id,name:props.currentrecord?.name,entityType:props.currentrecord?.entityType});
     if(recordReference.id !== props.currentrecord?.id){
         setRecordReference({id:props.currentrecord?.id,name:props.currentrecord?.name,entityType:props.currentrecord?.entityType});
     }
     const openSelectedRecord = () => {
         console.log('open selected record called.');
+        xrmContext.navigation.openForm({
+            entityName:recordReference.entityType!,
+            entityId: recordReference.id!,
+            openInNewWindow:false
+        });
     };
     const clearRecord = () => {
         setRecordReference(defaultValue);
         props.onValueChange(null);
     };
-
+    const onRecordSelected =(lv:ComponentFramework.LookupValue) => {
+        setRecordReference({id:lv.id,name:lv.name,entityType:lv.entityType});
+        props.onValueChange(lv);
+    }
     let cstyle = {...containerStyles};
+    let bstyle = {...btnStyles};
     if(recordReference?.id === undefined){
         cstyle.paddingInlineStart = '10px';
+        bstyle.marginRight = '14px';
     }
     return (
      <FluentProvider style={{width:'100%'}} theme={webLightTheme}>
@@ -55,7 +67,7 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
             </InteractionTag>}
             {recordReference?.id == undefined && <div style={{width:'100%'}}> ---</div>
             }
-            <SearchButton style={btnStyles}  />
+            <SearchButton style={bstyle} onSelectedValue={onRecordSelected} />
         </div>
     </FluentProvider>
     

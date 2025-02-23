@@ -33,6 +33,8 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
         notifyOutputChanged: () => void,
         state: ComponentFramework.Dictionary
     ): void {
+        (context.parameters.MainLookUp as any).getAllViews('contact')
+        .then((r:any) => console.log(r)).catch(console.error);
         const userPagingLimit = (context.userSettings as any).pagingLimit ?? this._defaultPagingSize;
         this._recordService = this.isLocalEnvironment() ?
          new ContextRecordService(context.webAPI,userPagingLimit) :
