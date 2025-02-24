@@ -2,7 +2,14 @@ import { useContext, useEffect, useState } from "react";
 import { XrmContext } from "../components/XrmContextProvider";
 import { ContextRecordService, FakeRecordService, IRecordService } from "../services/recordService";
 import { LookupSettings } from "../ControlSettings";
-
+export type LookupView = {
+    viewId:string;
+    viewName:string;
+    relatedEntityName:string;
+    isDefault:boolean;
+    isPinned:boolean;
+    isUserView:boolean;
+}
 
 export function useXrm(){
     const context = useContext(XrmContext);
@@ -32,5 +39,21 @@ export function useEntityMetadata(etn:string,attributes?:string[]){
         fetchEMD();
     },[etn]);
     return entityMetadata;
+    
+}
+export function useLookupViews(etn:string):[LookupView[],boolean]{
+    const [views,setViews] = useState<LookupView[]>([]);
+    const [isViewLoading,setIsViewLoading] = useState<boolean>(false);
+    const xrmContext = useXrm();
+    useEffect(() => {
+        const fetchViews = async () => {
+            setIsViewLoading(true);
+            const views:LookupView[] = await (xrmContext.parameters.MainLookUp as any).getAllViews(etn);
+            setViews(views);
+            setIsViewLoading(false);
+        }
+        fetchViews();
+    },[etn]);
+    return [views,isViewLoading];
     
 }

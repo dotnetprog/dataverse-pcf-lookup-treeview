@@ -2,9 +2,7 @@ import { InteractionTag, InteractionTagPrimary, InteractionTagSecondary } from "
 import * as React from "react";
 import { useState } from "react";
 import { SearchButton } from "./SearchButton";
-import { TreeSelectionDialog } from "./TreeSelectionDialog";
 import { FluentProvider, webLightTheme } from '@fluentui/react-components';
-import { XrmContext } from "./XrmContextProvider";
 import { useXrm } from "../hooks/xrm.hooks";
 
 export interface ILookuptreeProps {
@@ -31,24 +29,24 @@ const containerStyles:React.CSSProperties = {
  };
 export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) => {
     const xrmContext = useXrm();
-    const [recordReference,setRecordReference] = useState({id:props.currentrecord?.id,name:props.currentrecord?.name,entityType:props.currentrecord?.entityType});
-    if(recordReference.id !== props.currentrecord?.id){
-        setRecordReference({id:props.currentrecord?.id,name:props.currentrecord?.name,entityType:props.currentrecord?.entityType});
+    const [recordReference,setRecordReference] = useState(props.currentrecord);
+    if(recordReference?.id !== props.currentrecord?.id){
+        setRecordReference(props.currentrecord);
     }
     const openSelectedRecord = () => {
         console.log('open selected record called.');
         xrmContext.navigation.openForm({
-            entityName:recordReference.entityType!,
-            entityId: recordReference.id!,
+            entityName:recordReference?.entityType!,
+            entityId: recordReference?.id!,
             openInNewWindow:false
         });
     };
     const clearRecord = () => {
-        setRecordReference(defaultValue);
+        setRecordReference(null);
         props.onValueChange(null);
     };
     const onRecordSelected =(lv:ComponentFramework.LookupValue) => {
-        setRecordReference({id:lv.id,name:lv.name,entityType:lv.entityType});
+        setRecordReference(lv);
         props.onValueChange(lv);
     }
     let cstyle = {...containerStyles};
@@ -60,14 +58,14 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
     return (
      <FluentProvider style={{width:'100%'}} theme={webLightTheme}>
         <div style={cstyle}>
-            {recordReference?.id !== undefined &&
+            {recordReference?.id !== undefined && recordReference?.id !== null &&
             <InteractionTag style={{width:'100%'}} value={recordReference?.id} key={recordReference?.id} appearance="brand">
                 <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{recordReference?.name}</InteractionTagPrimary>    
                 <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />
             </InteractionTag>}
             {recordReference?.id == undefined && <div style={{width:'100%'}}> ---</div>
             }
-            <SearchButton style={bstyle} onSelectedValue={onRecordSelected} />
+            <SearchButton style={bstyle} onSelectedValue={onRecordSelected} selectedRecord={recordReference} />
         </div>
     </FluentProvider>
     

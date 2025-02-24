@@ -16,17 +16,54 @@ import { Button,
      HeadlessFlatTreeItemProps,
      useHeadlessFlatTree_unstable,
      TreeCheckedChangeData,
-     TreeCheckedChangeEvent,} from "@fluentui/react-components";
+     TreeCheckedChangeEvent,
+     Tag,
+     InteractionTag,
+     InteractionTagPrimary,
+     InteractionTagSecondary,
+     Field,
+     Divider,} from "@fluentui/react-components";
 import * as React from "react"; 
 import {useEffect} from "react"; 
 import { AddSquare16Regular, FluentIconsProps, SearchRegular, SubtractSquare16Regular } from "@fluentui/react-icons";
-import { useEntityMetadata, useRecordService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
+import { LookupView, useEntityMetadata, useLookupViews, useRecordService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
 import { groupBy } from "../utility";
+import { ViewSelector } from "./ViewSelector";
 const useStyles = makeStyles({
     container: {
-      "> div > span > input": { pointerEvents: "none" },
+        "> div > span ": { display:"none" },
+      "> div > span > input": { pointerEvents: "none",display:"none" },
     },
-  
+    dialogContainer:{
+        height:'94%',
+        width:'100%',
+        maxWidth:'1000px'
+        
+    },
+    dialogBody:{
+        display:'relative',
+        height:'100%'
+    },
+    dialogSeparator:{
+        display:'absolute',
+        bottom:0,
+        width:'99%'
+    },
+    field:{
+        "> label": { fontWeight:"700" },
+        
+    },
+    advancedSectionContainer:{
+        display:'flex',
+        flexFlowflow:{
+            flexDirection:'row',
+            flexWrap:'nowrap'
+        },
+        width:'auto',
+        height:'auto',
+        boxSizing: 'border-box',
+        justifyContent: 'space-between'
+    }
     // Inverted Spinners are meant as overlays (e.g., over an image or similar)
     // so give it a solid, dark background so it is visible in all themes.
   });
@@ -38,21 +75,7 @@ class GroupedEntity implements ComponentFramework.WebApi.Entity{
     childEntities:ComponentFramework.WebApi.Entity[];
     name:string;
 }
-/*
-const TreeLeefMapper = (e:ComponentFramework.WebApi.Entity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {  
-    
-    return (<TreeItem itemType="leaf" value={e[entityMetadata.PrimaryIdAttribute]}><TreeItemLayout>{e[entityMetadata.PrimaryNameAttribute]}</TreeItemLayout></TreeItem>)
-};
-const TreeViewMapper = (openItems:TreeItemValue[],gr:GroupedEntity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
-    return (
-        <Tr  itemType="branch"  value={gr.name}>
-            <TreeItemLayout expandIcon={openItems.includes(gr.name) ? ( <SubtractSquare16Regular /> ) : ( <AddSquare16Regular />)}>
-            {gr.name} ({gr.childEntities.length})
-            </TreeItemLayout>
-           
-        </FlatTreeItem >
-        );
-}*/
+
 const getFormattedField = (field:string,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
     const amd = entityMetadata.Attributes.getByName(field);
    
@@ -69,13 +92,15 @@ const getFormattedField = (field:string,entityMetadata:ComponentFramework.Proper
             return field;
     }
 }
+const noValue = "(no value)"
 const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata,parentValue?:any):CustomTreeItem[] => {
     let beautifyData:CustomTreeItem[] = [];
 
     obj.forEach((value:any,key:any,m:any) => {
+        let klabel = !key ? noValue : key;
         let d:CustomTreeItem = {
-            content:key,
-            value:key,
+            content:klabel,
+            value:klabel,
             parentValue:parentValue,
             
         }; 
@@ -84,30 +109,45 @@ const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyH
             value.forEach((v:any) => {
                 beautifyData.push({
                     value:v[entityMetadata.PrimaryIdAttribute],
-                    parentValue:key,
+                    parentValue:klabel,
                     content:v[entityMetadata.PrimaryNameAttribute]
                 });
             });
         }else{
-            const childrows = MapToCustomTreeItem(value,entityMetadata,key);
+            const childrows = MapToCustomTreeItem(value,entityMetadata,klabel);
             beautifyData = beautifyData.concat(childrows);
         }
     });
    
     return beautifyData;
 }
-export type SearchButtonProps = ButtonProps & { onSelectedValue(value:ComponentFramework.LookupValue): void;}
-export const SearchButton:React.FC<SearchButtonProps> = (props) => {
-    const { onSelectedValue,...btnProps } = props;
+export type SearchButtonProps = ButtonProps &
+{ 
+    selectedRecord:ComponentFramework.LookupValue | null;
+    onSelectedValue(value:ComponentFramework.LookupValue): void;
+}
+export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selectedRecord,...btnprops}) => {
     const xrmContext = useXrm();
+
     const controlSettings = useXrmControlSettings();
-    const entityMetadata = useEntityMetadata(xrmContext!.parameters.MainLookUp.getTargetEntityType(),controlSettings.groupby);
+
+    const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
+    const [views,isViewLoading] = useLookupViews(etn);
+    const entityMetadata = useEntityMetadata(etn,controlSettings.groupby);
     const recordService = useRecordService(50);
-    const treeUnselectableStyle = useStyles();
+    const styles = useStyles();
+    const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
+    const [isOpened,setIsOpened] = React.useState(false);
     const [groupedRecords,setGroupedRecords] = React.useState<CustomTreeItem[]>([]);
-   
+    const [disableSelectBtn,setDisableSelectBtn] = React.useState(true);
+    const [isLoading,setIsLoading] = React.useState(true);
+    const onSelectChange = (event: TreeCheckedChangeEvent, data: TreeCheckedChangeData)=>{
+        const sitems = Array.from(data.checkedItems).map(v=>v);
+        setDisableSelectBtn(sitems.length === 0);
+    }
     const flatTree = useHeadlessFlatTree_unstable(groupedRecords, {
-        selectionMode: 'single'
+        selectionMode: 'single',
+        onCheckedChange:onSelectChange
       });
     const onSelectClick = () => {
         console.log('Tree slection has changed');
@@ -126,39 +166,65 @@ export const SearchButton:React.FC<SearchButtonProps> = (props) => {
 
         
     } 
-    const [isLoading,setIsLoading] = React.useState(true);
-
+    
+    
     const fetchData = async () => {
+        if (!currentView || !isOpened) {
+            return;
+        }
         console.log('fetching data for tree view.');
         setIsLoading(true);
+        
         // get the data from the api
-        const data = await recordService.getRecordsByView(entityMetadata!.LogicalName ,controlSettings.defaultViewId);
+        const data = await recordService.getRecordsByView(entityMetadata!.LogicalName ,currentView!.viewId);
         // convert the data to json
         const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...controlSettings.groupby.map((s) => getFormattedField(s,entityMetadata!))) as any;    
         // set state with the result
         setGroupedRecords(MapToCustomTreeItem(groupedData,entityMetadata!));
         setIsLoading(false);
       };
+    useEffect(() => {
+       
+        fetchData();
+    },[currentView,isOpened])
+    useEffect(() => {
+        if(isViewLoading || views.length === 0){
+            return;
+        }
+        const defaultview = views.find((v) => v.isDefault)!;
+        setCurrentView(defaultview);
+    },[isViewLoading])
     const onDialogOpenChange = (event: DialogOpenChangeEvent, data: DialogOpenChangeData) =>{
+        setIsOpened(data.open);
         if(!data.open){
             return;
         }
-        fetchData();
     }
-   
+    const openSelectedRecord = () => {
+        console.log('open selected record called.');
+        xrmContext.navigation.openForm({
+            entityName:selectedRecord?.entityType!,
+            entityId: selectedRecord?.id!,
+            openInNewWindow:false
+        });
+    };
     return (
         <Dialog onOpenChange={onDialogOpenChange}>
             <DialogTrigger disableButtonEnhancement>
             <Button
-        {...btnProps}
         appearance="transparent"
+        {...btnprops}
         icon={<SearchRegular {...IconProps} />}
         size="small" />
             </DialogTrigger>
-        <DialogSurface>
-        <DialogBody>
+        <DialogSurface className={styles.dialogContainer}>
+        <DialogBody className={styles.dialogBody}>
         <DialogTitle>Select a record</DialogTitle>
-        <DialogContent>
+        <DialogContent style={{height:'100%',position:'relative'}} >
+        <div className={styles.advancedSectionContainer}>
+            <ViewSelector views={views} entityName={etn} onViewChange={setCurrentView}/>
+        </div>
+        
         {isLoading ? 
          <Spinner appearance="primary" label="Loading data..." /> : 
          <FlatTree {...flatTree.getTreeProps()} aria-label="Selection">
@@ -166,18 +232,26 @@ export const SearchButton:React.FC<SearchButtonProps> = (props) => {
                 const { content, ...treeItemProps } = flatTreeItem.getTreeItemProps();
                 
                 return (
-                <FlatTreeItem className={ flatTreeItem.itemType === 'branch'? treeUnselectableStyle.container : undefined} {...treeItemProps} key={flatTreeItem.value}>
+                <FlatTreeItem className={ flatTreeItem.itemType === 'branch'? styles.container : undefined} {...treeItemProps} key={flatTreeItem.value}>
                     <TreeItemLayout>{content}</TreeItemLayout>
                 </FlatTreeItem>
                 );
             })}
             </FlatTree> 
             }
+            <Divider style={{width:'99%',position:'absolute',bottom:0}}  />
        
         </DialogContent>
-        <DialogActions>
+        <DialogActions style={{gridColumn:'1/-1',justifySelf:'normal'} } fluid={true}>
+        {selectedRecord !== undefined && selectedRecord !== null &&<Field style={{width:'100%',display:'block'}} className={styles.field} orientation="horizontal"
+                label="Current selected record">
+                <InteractionTag value={selectedRecord.id} key={selectedRecord?.id} appearance="brand">
+                                <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{selectedRecord?.name}</InteractionTagPrimary>    
+
+                            </InteractionTag>
+            </Field> }
             <DialogTrigger>
-                <Button onClick={onSelectClick} appearance="primary">Select</Button>
+                <Button disabled={disableSelectBtn} onClick={onSelectClick} appearance="primary">Select</Button>
             </DialogTrigger>
             <DialogTrigger disableButtonEnhancement>
             <Button appearance="secondary">Cancel</Button>
