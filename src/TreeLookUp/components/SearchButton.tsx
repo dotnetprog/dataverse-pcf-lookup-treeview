@@ -29,6 +29,7 @@ import { AddSquare16Regular, FluentIconsProps, SearchRegular, SubtractSquare16Re
 import { LookupView, useEntityMetadata, useLookupViews, useRecordService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
 import { groupBy } from "../utility";
 import { ViewSelector } from "./ViewSelector";
+import { SearchTextBox } from "./SearchTextBox";
 const useStyles = makeStyles({
     container: {
         "> div > span ": { display:"none" },
@@ -136,6 +137,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
     const entityMetadata = useEntityMetadata(etn,controlSettings.groupby);
     const recordService = useRecordService(50);
     const styles = useStyles();
+    const [filterText,setFilterText] = React.useState("");
     const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
     const [isOpened,setIsOpened] = React.useState(false);
     const [groupedRecords,setGroupedRecords] = React.useState<CustomTreeItem[]>([]);
@@ -208,6 +210,10 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
             openInNewWindow:false
         });
     };
+    const onFilterTextChange = (filter:string) => {
+        console.log('filter text: '+filter);
+        setFilterText(filter);
+    }
     return (
         <Dialog onOpenChange={onDialogOpenChange}>
             <DialogTrigger disableButtonEnhancement>
@@ -223,6 +229,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         <DialogContent style={{height:'100%',position:'relative'}} >
         <div className={styles.advancedSectionContainer}>
             <ViewSelector views={views} entityName={etn} onViewChange={setCurrentView}/>
+            <SearchTextBox onChangeText={onFilterTextChange} />
         </div>
         
         {isLoading ? 

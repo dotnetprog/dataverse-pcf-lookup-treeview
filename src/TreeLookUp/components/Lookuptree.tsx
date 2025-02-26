@@ -2,7 +2,7 @@ import { InteractionTag, InteractionTagPrimary, InteractionTagSecondary } from "
 import * as React from "react";
 import { useState } from "react";
 import { SearchButton } from "./SearchButton";
-import { FluentProvider, webLightTheme } from '@fluentui/react-components';
+import { FluentProvider, webLightTheme,webDarkTheme } from '@fluentui/react-components';
 import { useXrm } from "../hooks/xrm.hooks";
 
 export interface ILookuptreeProps {
