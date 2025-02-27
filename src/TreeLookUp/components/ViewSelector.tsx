@@ -48,7 +48,7 @@ export const ViewSelector:React.FC<IViewSelectorProps> = (props)  => {
     };
     return(<div className={styles.field}>
         <Select onChange={onChange} id={`${selectId}-underline`} appearance="outline">
-          {props.views.map((v) => <option value={v.viewId}>{v.viewName} {v.isDefault && "(Default)"}</option> )}
+          {props.views.map((v) => (<option key={v.viewId} value={v.viewId}>{v.viewName} {v.isDefault && "(Default)"}</option>) )}
         </Select>
       </div>)
 }

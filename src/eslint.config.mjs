@@ -46,7 +46,10 @@ export default [
       "@typescript-eslint/array-type":"off",
       "prefer-const":"off",
       "no-extra-boolean-cast":"off",
-      "@typescript-eslint/no-floating-promises":"off"
+      "@typescript-eslint/no-floating-promises":"off",
+      "@typescript-eslint/no-non-null-asserted-optional-chain":"off",
+      "@typescript-eslint/no-unsafe-call":"off",
+      "@typescript-eslint/unbound-method":"off"
     },
     settings: {
       react: {

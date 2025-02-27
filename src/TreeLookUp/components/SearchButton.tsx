@@ -22,7 +22,9 @@ import { Button,
      InteractionTagPrimary,
      InteractionTagSecondary,
      Field,
-     Divider,} from "@fluentui/react-components";
+     Divider,
+     Badge,
+     CounterBadge,} from "@fluentui/react-components";
 import * as React from "react"; 
 import {useEffect} from "react"; 
 import { AddSquare16Regular, FluentIconsProps, SearchRegular, SubtractSquare16Regular } from "@fluentui/react-icons";
@@ -71,7 +73,7 @@ const useStyles = makeStyles({
 const IconProps: FluentIconsProps = {
     transform:'scale (-1, 1)'
 };
-type CustomTreeItem = HeadlessFlatTreeItemProps & { content: string };
+type CustomTreeItem = HeadlessFlatTreeItemProps & { content: string,count:number };
 class GroupedEntity implements ComponentFramework.WebApi.Entity{
     childEntities:ComponentFramework.WebApi.Entity[];
     name:string;
@@ -103,15 +105,17 @@ const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyH
             content:klabel,
             value:klabel,
             parentValue:parentValue,
-            
+            count:0,
         }; 
         beautifyData.push(d);
         if(value.length){
+            d.count = value.length;
             value.forEach((v:any) => {
                 beautifyData.push({
                     value:v[entityMetadata.PrimaryIdAttribute],
                     parentValue:klabel,
-                    content:v[entityMetadata.PrimaryNameAttribute]
+                    content:v[entityMetadata.PrimaryNameAttribute],
+                    count:0
                 });
             });
         }else{
@@ -135,7 +139,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
     const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
     const [views,isViewLoading] = useLookupViews(etn);
     const entityMetadata = useEntityMetadata(etn,controlSettings.groupby);
-    const recordService = useRecordService(50);
+    const recordService = React.useMemo(() => useRecordService(50),[]);
     const styles = useStyles();
     const [filterText,setFilterText] = React.useState("");
     const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
@@ -178,7 +182,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         setIsLoading(true);
         
         // get the data from the api
-        const data = await recordService.getRecordsByView(entityMetadata!.LogicalName ,currentView!.viewId);
+        const data = await recordService.getRecordsByView(entityMetadata!.LogicalName ,entityMetadata!.PrimaryNameAttribute, currentView!.viewId,controlSettings.groupby,filterText);
         // convert the data to json
         const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...controlSettings.groupby.map((s) => getFormattedField(s,entityMetadata!))) as any;    
         // set state with the result
@@ -188,7 +192,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
     useEffect(() => {
        
         fetchData();
-    },[currentView,isOpened])
+    },[currentView,isOpened,filterText])
     useEffect(() => {
         if(isViewLoading || views.length === 0){
             return;
@@ -236,11 +240,11 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
          <Spinner appearance="primary" label="Loading data..." /> : 
          <FlatTree {...flatTree.getTreeProps()} aria-label="Selection">
              {Array.from(flatTree.items(), (flatTreeItem) => {
-                const { content, ...treeItemProps } = flatTreeItem.getTreeItemProps();
+                const { content,count, ...treeItemProps } = flatTreeItem.getTreeItemProps();
                 
                 return (
                 <FlatTreeItem className={ flatTreeItem.itemType === 'branch'? styles.container : undefined} {...treeItemProps} key={flatTreeItem.value}>
-                    <TreeItemLayout>{content}</TreeItemLayout>
+                    <TreeItemLayout aside={flatTreeItem.itemType === 'branch' ? <CounterBadge appearance="filled" size="medium">{count}</CounterBadge> : undefined}>{content}</TreeItemLayout>
                 </FlatTreeItem>
                 );
             })}
@@ -250,13 +254,13 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
        
         </DialogContent>
         <DialogActions style={{gridColumn:'1/-1',justifySelf:'normal'} } fluid={true}>
-        {selectedRecord !== undefined && selectedRecord !== null &&<Field style={{width:'100%',display:'block'}} className={styles.field} orientation="horizontal"
-                label="Current selected record">
+        <Field style={{width:'100%',display:'block'}} className={styles.field} orientation="horizontal"
+                label="Current selected record">{selectedRecord !== undefined && selectedRecord !== null &&
                 <InteractionTag value={selectedRecord.id} key={selectedRecord?.id} appearance="brand">
                                 <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{selectedRecord?.name}</InteractionTagPrimary>    
 
                             </InteractionTag>
-            </Field> }
+             }</Field>
             <DialogTrigger>
                 <Button disabled={disableSelectBtn} onClick={onSelectClick} appearance="primary">Select</Button>
             </DialogTrigger>
