@@ -27,7 +27,7 @@ import { Button,
      CounterBadge,} from "@fluentui/react-components";
 import * as React from "react"; 
 import {useEffect} from "react"; 
-import { AddSquare16Regular, FluentIconsProps, SearchRegular, SubtractSquare16Regular } from "@fluentui/react-icons";
+import { AddSquare16Regular, AddSquareRegular, FluentIconsProps, SearchRegular, SubtractSquare16Regular, SubtractSquareRegular } from "@fluentui/react-icons";
 import { LookupView, useEntityMetadata, useLookupViews, useRecordService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
 import { groupBy } from "../utility";
 import { ViewSelector } from "./ViewSelector";
@@ -56,6 +56,10 @@ const useStyles = makeStyles({
         "> label": { fontWeight:"700" },
         
     },
+    treeBar: {
+        columnGap: "15px",
+        display: "flex",
+      },
     advancedSectionContainer:{
         display:'flex',
         flexFlowflow:{
@@ -106,12 +110,14 @@ const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyH
             value:klabel,
             parentValue:parentValue,
             count:0,
+            itemType:"branch"
         }; 
         beautifyData.push(d);
         if(value.length){
             d.count = value.length;
             value.forEach((v:any) => {
                 beautifyData.push({
+                    itemType:"leaf",
                     value:v[entityMetadata.PrimaryIdAttribute],
                     parentValue:klabel,
                     content:v[entityMetadata.PrimaryNameAttribute],
@@ -133,14 +139,13 @@ export type SearchButtonProps = ButtonProps &
 }
 export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selectedRecord,...btnprops}) => {
     const xrmContext = useXrm();
-
-    const controlSettings = useXrmControlSettings();
-
+    const controlSettings = React.useMemo(() =>useXrmControlSettings(),[]);
     const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
+    const styles = useStyles();
     const [views,isViewLoading] = useLookupViews(etn);
     const entityMetadata = useEntityMetadata(etn,controlSettings.groupby);
     const recordService = React.useMemo(() => useRecordService(50),[]);
-    const styles = useStyles();
+    const [openItems,setOpenItems] = React.useState<Iterable<TreeItemValue>>([]);
     const [filterText,setFilterText] = React.useState("");
     const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
     const [isOpened,setIsOpened] = React.useState(false);
@@ -151,9 +156,14 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         const sitems = Array.from(data.checkedItems).map(v=>v);
         setDisableSelectBtn(sitems.length === 0);
     }
+    const onOpenChange = (event: TreeOpenChangeEvent, data: TreeOpenChangeData)=>{
+        setOpenItems(data.openItems);
+    }
     const flatTree = useHeadlessFlatTree_unstable(groupedRecords, {
         selectionMode: 'single',
-        onCheckedChange:onSelectChange
+        onCheckedChange:onSelectChange,
+        onOpenChange:onOpenChange,
+        openItems:openItems
       });
     const onSelectClick = () => {
         console.log('Tree slection has changed');
@@ -187,6 +197,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...controlSettings.groupby.map((s) => getFormattedField(s,entityMetadata!))) as any;    
         // set state with the result
         setGroupedRecords(MapToCustomTreeItem(groupedData,entityMetadata!));
+        setOpenItems([]);
         setIsLoading(false);
       };
     useEffect(() => {
@@ -202,10 +213,15 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
     },[isViewLoading])
     const onDialogOpenChange = (event: DialogOpenChangeEvent, data: DialogOpenChangeData) =>{
         setIsOpened(data.open);
-        if(!data.open){
-            return;
-        }
     }
+    const collapseAll = React.useCallback(() => {
+        setOpenItems([]);
+    },[]);
+    const expandAll = () => {
+        console.log('expandAll');
+        const items = groupedRecords.filter(gr => gr.itemType === 'branch').map(gr => gr.value);
+        setOpenItems(items);
+    };
     const openSelectedRecord = () => {
         console.log('open selected record called.');
         xrmContext.navigation.openForm({
@@ -233,9 +249,17 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         <DialogContent style={{height:'100%',position:'relative'}} >
         <div className={styles.advancedSectionContainer}>
             <ViewSelector views={views} entityName={etn} onViewChange={setCurrentView}/>
+            
             <SearchTextBox onChangeText={onFilterTextChange} />
         </div>
-        
+        <div className={styles.treeBar}>
+            <Button appearance="subtle" onClick={expandAll} icon={ <AddSquareRegular />}>
+                Expand All
+            </Button>
+            <Button appearance="subtle" onClick={collapseAll} icon={ <SubtractSquareRegular />}>
+                Collapse All
+            </Button>
+        </div>
         {isLoading ? 
          <Spinner appearance="primary" label="Loading data..." /> : 
          <FlatTree {...flatTree.getTreeProps()} aria-label="Selection">

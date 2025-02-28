@@ -42,7 +42,7 @@ export class FakeRecordService implements IRecordService {
     }
 
 }
-type viewLists = {[key: string]: string;}
+type viewLists = Record<string,string> ;
 export class ContextRecordService implements IRecordService {
     private _webClient:ComponentFramework.WebApi;
     private _pagingSize:number;
