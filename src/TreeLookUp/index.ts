@@ -6,7 +6,6 @@ import { ILookuptreeProps, Lookuptree } from "./components/Lookuptree";
 
 export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOutputs> {
     private notifyOutputChanged: () => void;
-    private _recordService:IRecordService;
     private _currentValue:ComponentFramework.LookupValue | null;
     private _fakeCurrentValue:ComponentFramework.LookupValue = {
         entityType:'contact',
@@ -33,11 +32,6 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
         notifyOutputChanged: () => void,
         state: ComponentFramework.Dictionary
     ): void {
-       
-        const userPagingLimit = (context.userSettings as any).pagingLimit ?? this._defaultPagingSize;
-        this._recordService = this.isLocalEnvironment() ?
-         new ContextRecordService(context.webAPI,userPagingLimit) :
-         new FakeRecordService();
         this.notifyOutputChanged = notifyOutputChanged;
     }
     private setCurrentValueFromContext(context: ComponentFramework.Context<IInputs>){

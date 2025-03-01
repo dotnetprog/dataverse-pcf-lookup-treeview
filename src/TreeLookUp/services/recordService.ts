@@ -35,34 +35,41 @@ const mockContactDataset:ComponentFramework.WebApi.Entity[] = [
 
 export interface IRecordService {
     getRecordsByView(entityName:string,primaryAttribute:string,viewid:string,groupby:string[],filterText:string):Promise<ComponentFramework.WebApi.Entity[]>
+    getViewFields(viewid:string):string[];
 }
 export class FakeRecordService implements IRecordService {
     getRecordsByView(entityName: string,primaryAttribute:string, viewid: string,groupby:string[],filterText:string): Promise<ComponentFramework.WebApi.Entity[]> {
         return new Promise((resolve,reject) => {resolve(mockContactDataset);});
+    }
+    getViewFields(viewid:string):string[]{
+        return [];
     }
 
 }
 type viewLists = Record<string,string> ;
 export class ContextRecordService implements IRecordService {
     private _webClient:ComponentFramework.WebApi;
-    private _pagingSize:number;
     private _xmlParse:DOMParser = new DOMParser();
     private _xmlSerializer:XMLSerializer = new XMLSerializer();
     private _viewFetch:viewLists
     /**
      *
      */
-    constructor(webClient:ComponentFramework.WebApi,pagingSize:number) {
+    constructor(webClient:ComponentFramework.WebApi) {
         this._webClient = webClient;
-        this._pagingSize = pagingSize;
         this._viewFetch = {};
     }
-
+    public getViewFields(viewid:string):string[]{
+        if(!this._viewFetch[viewid]){return [];}
+        let xmlDoc = this._xmlParse.parseFromString(this._viewFetch[viewid],"text/xml");
+        const attributesXmlElems = Array.from(xmlDoc.getElementsByTagName('attribute'));
+        return attributesXmlElems.map(a => a.getAttribute('name')!);
+    }
     async getRecordsByView(entityName:string,primaryAttribute:string,viewid: string,groupby:string[],filterText:string): Promise<ComponentFramework.WebApi.Entity[]> {
         const viewfetchXml = this._transformFetchXml(await this._getView(viewid),primaryAttribute,groupby,filterText);
         console.log(viewfetchXml);
         const options = `?fetchXml=${encodeURIComponent(viewfetchXml)}`;
-        const records = await this._webClient.retrieveMultipleRecords(entityName,options,this._pagingSize);
+        const records = await this._webClient.retrieveMultipleRecords(entityName,options);
         return records.entities;
     }
     private async _getView(viewid:string):Promise<string>{

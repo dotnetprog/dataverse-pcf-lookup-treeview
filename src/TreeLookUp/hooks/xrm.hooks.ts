@@ -15,20 +15,22 @@ export function useXrm(){
     const context = useContext(XrmContext);
     return context!;
 }
-export function useRecordService(defaultPagingLimit:number):IRecordService{
+export function useRecordService():IRecordService{
     const xrmContext = useXrm();
-    const userPagingLimit = (xrmContext!.userSettings as any).pagingLimit ?? defaultPagingLimit;
     return window.location.hostname === 'localhost' ? 
                 new FakeRecordService() : 
-                new ContextRecordService(xrmContext!.webAPI,userPagingLimit);
+                new ContextRecordService(xrmContext!.webAPI);
 }
 export function useXrmControlSettings():LookupSettings{
     const xrmContext = useXrm();
-    const settings =xrmContext!.parameters.LookUpSettings.raw;
-    return JSON.parse(settings!);
+    const settings:LookupSettings = {
+        groupby:xrmContext!.parameters.GroupBy.raw!.split(',')
+    };
+       
+    return settings;
 
 }
-export function useEntityMetadata(etn:string,attributes?:string[]){
+export function useEntityMetadata(etn:string,attributes?:string[]):[ComponentFramework.PropertyHelper.EntityMetadata | undefined, React.Dispatch<React.SetStateAction<ComponentFramework.PropertyHelper.EntityMetadata | undefined>>]{
     const [entityMetadata,setEntityMetadata] = useState<ComponentFramework.PropertyHelper.EntityMetadata>();
     const xrmContext = useXrm();
     useEffect(() => {
@@ -38,7 +40,7 @@ export function useEntityMetadata(etn:string,attributes?:string[]){
         }
         fetchEMD();
     },[etn]);
-    return entityMetadata;
+    return [entityMetadata,setEntityMetadata] ;
     
 }
 export function useLookupViews(etn:string):[LookupView[],boolean]{

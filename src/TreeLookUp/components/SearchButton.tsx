@@ -32,6 +32,8 @@ import { LookupView, useEntityMetadata, useLookupViews, useRecordService, useXrm
 import { groupBy } from "../utility";
 import { ViewSelector } from "./ViewSelector";
 import { SearchTextBox } from "./SearchTextBox";
+import { RecordTag } from "./RecordTag";
+import { EntityIcon } from "./EntityIcon";
 const useStyles = makeStyles({
     container: {
         "> div > span ": { display:"none" },
@@ -77,7 +79,7 @@ const useStyles = makeStyles({
 const IconProps: FluentIconsProps = {
     transform:'scale (-1, 1)'
 };
-type CustomTreeItem = HeadlessFlatTreeItemProps & { content: string,count:number };
+type CustomTreeItem = HeadlessFlatTreeItemProps & { description?:string,content: string,count:number,lookup?:ComponentFramework.LookupValue };
 class GroupedEntity implements ComponentFramework.WebApi.Entity{
     childEntities:ComponentFramework.WebApi.Entity[];
     name:string;
@@ -89,25 +91,35 @@ const getFormattedField = (field:string,entityMetadata:ComponentFramework.Proper
     switch(amd.AttributeType){
         case 0:
         case 2:
-        case 6:
+
         case 8:
         case 9:
         case 11:
         case 13:
             return `${field}@OData.Community.Display.V1.FormattedValue`;
+        case 6:
+        case 1:
+            return `_${field}_value@OData.Community.Display.V1.FormattedValue`
         default:
             return field;
     }
 }
-const noValue = "(no value)"
-const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata,parentValue?:any):CustomTreeItem[] => {
+const noValue = "(none)";
+const getDescriptionForRecord = (record:ComponentFramework.WebApi.Entity,fields:string[]) => {
+    if(fields.length === 0){
+        return undefined;
+    }
+    const description = fields.map(f => record[f]).filter(v => v !== undefined && v !== null).join(' - ');
+    return description === "" ? undefined: description;
+}
+const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata,viewFields:string[],parentValue?:any):CustomTreeItem[] => {
     let beautifyData:CustomTreeItem[] = [];
 
     obj.forEach((value:any,key:any,m:any) => {
         let klabel = !key ? noValue : key;
         let d:CustomTreeItem = {
             content:klabel,
-            value:klabel,
+            value:parentValue ?parentValue+ klabel: klabel,
             parentValue:parentValue,
             count:0,
             itemType:"branch"
@@ -119,13 +131,15 @@ const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyH
                 beautifyData.push({
                     itemType:"leaf",
                     value:v[entityMetadata.PrimaryIdAttribute],
-                    parentValue:klabel,
+                    parentValue:d.value,
                     content:v[entityMetadata.PrimaryNameAttribute],
-                    count:0
+                    count:0,
+                    lookup:{ entityType:entityMetadata.LogicalName,id:v[entityMetadata.PrimaryIdAttribute],name: v[entityMetadata.PrimaryNameAttribute]},
+                    description:getDescriptionForRecord(v,viewFields)
                 });
             });
         }else{
-            const childrows = MapToCustomTreeItem(value,entityMetadata,klabel);
+            const childrows = MapToCustomTreeItem(value,entityMetadata,viewFields,d.value);
             beautifyData = beautifyData.concat(childrows);
         }
     });
@@ -143,8 +157,8 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
     const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
     const styles = useStyles();
     const [views,isViewLoading] = useLookupViews(etn);
-    const entityMetadata = useEntityMetadata(etn,controlSettings.groupby);
-    const recordService = React.useMemo(() => useRecordService(50),[]);
+    const [entityMetadata,setEntityMetadata] = useEntityMetadata(etn,controlSettings.groupby);
+    const recordService = React.useMemo(() => useRecordService(),[]);
     const [openItems,setOpenItems] = React.useState<Iterable<TreeItemValue>>([]);
     const [filterText,setFilterText] = React.useState("");
     const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
@@ -193,11 +207,19 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         
         // get the data from the api
         const data = await recordService.getRecordsByView(entityMetadata!.LogicalName ,entityMetadata!.PrimaryNameAttribute, currentView!.viewId,controlSettings.groupby,filterText);
+        const reservedFields:string[] = [...controlSettings.groupby,entityMetadata!.PrimaryNameAttribute,entityMetadata!.PrimaryIdAttribute];
+        let viewFields = recordService.getViewFields(currentView!.viewId).filter(f => !reservedFields.includes(f));//exclude columns that is already used in the component.
+        if(viewFields.length > 2) {//take only the first two
+            viewFields = viewFields.slice(0,2);
+        }
+        
+        const emd = await xrmContext.utils.getEntityMetadata(etn,[...controlSettings.groupby,...viewFields]);
         // convert the data to json
         const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...controlSettings.groupby.map((s) => getFormattedField(s,entityMetadata!))) as any;    
         // set state with the result
-        setGroupedRecords(MapToCustomTreeItem(groupedData,entityMetadata!));
-        setOpenItems([]);
+        const treeItems = MapToCustomTreeItem(groupedData,entityMetadata!,viewFields.map(f => getFormattedField(f,emd)));
+        setGroupedRecords(treeItems);
+        setOpenItems(treeItems.filter(t => t.itemType === "branch").map(t=> t.value));//Always open all branches by default
         setIsLoading(false);
       };
     useEffect(() => {
@@ -230,6 +252,14 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
             openInNewWindow:false
         });
     };
+    const openRecord = React.useCallback((record:ComponentFramework.LookupValue) => {
+        console.log('open record');
+        xrmContext.navigation.openForm({
+            entityName:record.entityType,
+            entityId: record.id,
+            openInNewWindow:false
+        });
+    },[]);
     const onFilterTextChange = (filter:string) => {
         console.log('filter text: '+filter);
         setFilterText(filter);
@@ -264,11 +294,15 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
          <Spinner appearance="primary" label="Loading data..." /> : 
          <FlatTree {...flatTree.getTreeProps()} aria-label="Selection">
              {Array.from(flatTree.items(), (flatTreeItem) => {
-                const { content,count, ...treeItemProps } = flatTreeItem.getTreeItemProps();
+                const {description,lookup ,content,count, ...treeItemProps } = flatTreeItem.getTreeItemProps();
                 
                 return (
                 <FlatTreeItem className={ flatTreeItem.itemType === 'branch'? styles.container : undefined} {...treeItemProps} key={flatTreeItem.value}>
-                    <TreeItemLayout aside={flatTreeItem.itemType === 'branch' ? <CounterBadge appearance="filled" size="medium">{count}</CounterBadge> : undefined}>{content}</TreeItemLayout>
+                    {flatTreeItem.itemType === 'branch' ? 
+                    <TreeItemLayout aside={<CounterBadge appearance="filled" size="medium">{count}</CounterBadge>}>{content}</TreeItemLayout>:
+                    <TreeItemLayout><RecordTag icon={<EntityIcon entityMetadata={entityMetadata!} />} onTagClick={openRecord} text={content} recordLookup={lookup!} description={description} /></TreeItemLayout>
+                    }
+                    
                 </FlatTreeItem>
                 );
             })}
