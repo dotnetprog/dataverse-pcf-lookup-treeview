@@ -23,8 +23,14 @@ export function useRecordService():IRecordService{
 }
 export function useXrmControlSettings():LookupSettings{
     const xrmContext = useXrm();
+    const isSecured = xrmContext.parameters.MainLookUp.security?.secured ?? false;
+    const security = xrmContext.parameters.MainLookUp.security!;
     const settings:LookupSettings = {
-        groupby:xrmContext!.parameters.GroupBy.raw!.split(',')
+        groupby:xrmContext!.parameters.GroupBy.raw!.split(','),
+        isReadOnly:xrmContext!.mode.isControlDisabled,
+        isViewPickerEnabled:(xrmContext.parameters.MainLookUp as any).enableViewPicker ?? true,
+        isEditable: isSecured  ? security.editable : true,
+        isReadable:isSecured  ? security.readable : true,
     };
        
     return settings;
@@ -50,7 +56,12 @@ export function useLookupViews(etn:string):[LookupView[],boolean]{
     useEffect(() => {
         const fetchViews = async () => {
             setIsViewLoading(true);
-            const views:LookupView[] = await (xrmContext.parameters.MainLookUp as any).getAllViews(etn);
+            const lookupAttribute = (xrmContext.parameters.MainLookUp as any);
+            const views:LookupView[] = await lookupAttribute.getAllViews(etn);
+            const defaultViewId = lookupAttribute.getDefaultViewId(etn);
+            views.forEach((v) => {
+                v.isDefault = v.viewId == defaultViewId
+            });
             setViews(views);
             setIsViewLoading(false);
         }

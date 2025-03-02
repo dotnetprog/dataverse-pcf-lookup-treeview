@@ -153,7 +153,7 @@ export type SearchButtonProps = ButtonProps &
 }
 export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selectedRecord,...btnprops}) => {
     const xrmContext = useXrm();
-    const controlSettings = React.useMemo(() =>useXrmControlSettings(),[]);
+    const controlSettings = useXrmControlSettings();
     const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
     const styles = useStyles();
     const [views,isViewLoading] = useLookupViews(etn);
@@ -278,7 +278,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         <DialogTitle>Select a record</DialogTitle>
         <DialogContent style={{height:'100%',position:'relative'}} >
         <div className={styles.advancedSectionContainer}>
-            <ViewSelector views={views} entityName={etn} onViewChange={setCurrentView}/>
+            <ViewSelector disabled={!controlSettings.isViewPickerEnabled} views={views} entityName={etn} onViewChange={setCurrentView}/>
             
             <SearchTextBox onChangeText={onFilterTextChange} />
         </div>

@@ -51,6 +51,18 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
     private isLocalEnvironment():boolean{
         return window.location.hostname === 'localhost';
     }
+    private async testContext(context: ComponentFramework.Context<IInputs>){
+        const etn = context.parameters.MainLookUp.getTargetEntityType();
+        const lookupAttribute = (context.parameters.MainLookUp as any);
+        const allviews = await lookupAttribute.getAllViews(etn);
+        console.log('allViews',allviews);
+        console.log('available viewIds',lookupAttribute.availableViewIds);
+        console.log('available ViewNames',lookupAttribute.availableViewNames);
+        const filter = lookupAttribute.filtering.getFilter();
+        console.log('filtering',filter);
+        const defaultViewId = lookupAttribute.getDefaultViewId(etn);
+        console.log('defaultViewId',defaultViewId);
+    }
     /**
      * Called when any value in the property bag has changed. This includes field values, data-sets, global values such as container height and width, offline status, control metadata values such as label, visible, etc.
      * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
@@ -58,6 +70,7 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
      */
     public updateView(context: ComponentFramework.Context<IInputs>): React.ReactElement {
         this.setCurrentValueFromContext(context);
+        this.testContext(context);
         const props: ILookuptreeProps = { 
             currentrecord:this._currentValue,
             entityName:context.parameters.MainLookUp.getTargetEntityType(),

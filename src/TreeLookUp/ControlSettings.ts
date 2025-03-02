@@ -1,3 +1,7 @@
 export type LookupSettings = {
-    groupby:string[]
+    groupby:string[],
+    isViewPickerEnabled:boolean,
+    isReadOnly:boolean,
+    isEditable:boolean,
+    isReadable:boolean
 }

@@ -35,20 +35,22 @@ const useStyles = makeStyles({
 export type IViewSelectorProps = {
     entityName:string;
     onViewChange:(view:LookupView)=>void;
-    views:LookupView[]
+    views:LookupView[],
+    disabled:boolean
 };
 
-export const ViewSelector:React.FC<IViewSelectorProps> = (props)  => {
+export const ViewSelector:React.FC<IViewSelectorProps> = React.memo( (props)  => {
     const styles = useStyles();
     const selectId = useId();
+    const defaultview = props.views.find((v) => v.isDefault);
     
     const onChange = (e:React.ChangeEvent<HTMLSelectElement>,data: SelectOnChangeData) => {
         const sv = props.views.find(v => v.viewId === data.value);
         props.onViewChange(sv!);
     };
     return(<div className={styles.field}>
-        <Select onChange={onChange} id={`${selectId}-underline`} appearance="outline">
+        <Select defaultValue={defaultview?.viewId} disabled={props.disabled} onChange={onChange} id={`${selectId}-underline`} appearance="outline">
           {props.views.map((v) => (<option key={v.viewId} value={v.viewId}>{v.viewName} {v.isDefault && "(Default)"}</option>) )}
         </Select>
       </div>)
-}
+})

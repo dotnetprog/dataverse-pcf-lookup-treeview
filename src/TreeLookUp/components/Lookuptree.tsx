@@ -3,7 +3,8 @@ import * as React from "react";
 import { useState } from "react";
 import { SearchButton } from "./SearchButton";
 import { FluentProvider, webLightTheme,webDarkTheme } from '@fluentui/react-components';
-import { useXrm } from "../hooks/xrm.hooks";
+import { useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
+import { FieldSecured } from "./FieldSecured";
 
 export interface ILookuptreeProps {
     entityName:string,
@@ -30,6 +31,7 @@ const containerStyles:React.CSSProperties = {
 export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) => {
     const xrmContext = useXrm();
     const [recordReference,setRecordReference] = useState(props.currentrecord);
+    const lookUpSettings = useXrmControlSettings();
     if(recordReference?.id !== props.currentrecord?.id){
         setRecordReference(props.currentrecord);
     }
@@ -55,21 +57,22 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
         cstyle.paddingInlineStart = '10px';
         bstyle.marginRight = '14px';
     }
+
     return (
      <FluentProvider style={{width:'100%'}} theme={webLightTheme}>
-        <div style={cstyle}>
+        {lookUpSettings.isReadable ? <div style={cstyle}>
+            
             {recordReference?.id !== undefined && recordReference?.id !== null &&
             <InteractionTag style={{width:'100%'}} value={recordReference?.id} key={recordReference?.id} appearance="brand">
                 <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{recordReference?.name}</InteractionTagPrimary>    
-                <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />
+                {!lookUpSettings.isReadOnly && lookUpSettings.isEditable && <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />}
             </InteractionTag>}
             {recordReference?.id == undefined && <div style={{width:'100%'}}> ---</div>
             }
-            <SearchButton style={bstyle} onSelectedValue={onRecordSelected} selectedRecord={recordReference} />
-        </div>
+            <SearchButton disabled={lookUpSettings.isReadOnly || !lookUpSettings.isEditable} style={bstyle} onSelectedValue={onRecordSelected} selectedRecord={recordReference} />
+        </div> : <FieldSecured tag="input-secured" />}
+       
     </FluentProvider>
-    
-    
     )
       
 };  
