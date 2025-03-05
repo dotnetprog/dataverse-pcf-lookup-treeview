@@ -4,7 +4,7 @@ import { useState } from "react";
 import { SearchButton } from "./SearchButton";
 import { FluentProvider, webLightTheme,webDarkTheme } from '@fluentui/react-components';
 import { useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
-import { FieldSecured } from "./FieldSecured";
+import FieldSecured  from "./FieldSecured";
 
 export interface ILookuptreeProps {
     entityName:string,

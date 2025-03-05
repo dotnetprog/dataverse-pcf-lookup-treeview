@@ -2,6 +2,8 @@ import { useContext, useEffect, useState } from "react";
 import { XrmContext } from "../components/XrmContextProvider";
 import { ContextRecordService, FakeRecordService, IRecordService } from "../services/recordService";
 import { LookupSettings } from "../ControlSettings";
+import { CachedEntityMetadataService, IEntityMetadataService } from "../services/entityMetadataService";
+import { CachedViewService, IViewService } from "../services/viewService";
 export type LookupView = {
     viewId:string;
     viewName:string;
@@ -15,11 +17,19 @@ export function useXrm(){
     const context = useContext(XrmContext);
     return context!;
 }
+export function useViewService():IViewService{
+    const xrmContext = useXrm();
+    return new CachedViewService(xrmContext.webAPI);
+}
 export function useRecordService():IRecordService{
     const xrmContext = useXrm();
     return window.location.hostname === 'localhost' ? 
                 new FakeRecordService() : 
                 new ContextRecordService(xrmContext!.webAPI);
+}
+export function useMetadataService():IEntityMetadataService{
+    const xrmContext = useXrm();
+    return new CachedEntityMetadataService(xrmContext.utils);
 }
 export function useXrmControlSettings():LookupSettings{
     const xrmContext = useXrm();

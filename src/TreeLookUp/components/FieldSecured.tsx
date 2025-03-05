@@ -10,12 +10,13 @@ const useStyles = makeStyles({
         "> span": { ...shorthands.borderStyle("none"),width:'100%' },
     }
 });
-export type FieldSecuredProps = {
+type FieldSecuredProps = {
     tag:string
 };
 
-export const FieldSecured:React.FC<FieldSecuredProps> = React.memo(({tag})=>{
+const FieldSecured:React.FC<FieldSecuredProps> = ({tag})=>{
     const style = useStyles();
     const passwordId = useId(tag);
     return (<div className={style.container}><Input style={{width:'100%'}} disabled={true} appearance="filled-darker" type="password" defaultValue="password" id={passwordId} /></div>)
-})
+};
+export default React.memo(FieldSecured);

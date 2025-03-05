@@ -32,14 +32,14 @@ const useStyles = makeStyles({
     }
   });
 
-export type IViewSelectorProps = {
+type IViewSelectorProps = {
     entityName:string;
     onViewChange:(view:LookupView)=>void;
     views:LookupView[],
     disabled:boolean
 };
 
-export const ViewSelector:React.FC<IViewSelectorProps> = React.memo( (props)  => {
+const ViewSelector:React.FC<IViewSelectorProps> =  (props)  => {
     const styles = useStyles();
     const selectId = useId();
     const defaultview = props.views.find((v) => v.isDefault);
@@ -53,4 +53,5 @@ export const ViewSelector:React.FC<IViewSelectorProps> = React.memo( (props)  =>
           {props.views.map((v) => (<option key={v.viewId} value={v.viewId}>{v.viewName} {v.isDefault && "(Default)"}</option>) )}
         </Select>
       </div>)
-})
+};
+export default React.memo(ViewSelector);

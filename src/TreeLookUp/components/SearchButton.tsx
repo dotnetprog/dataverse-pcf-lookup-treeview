@@ -28,12 +28,14 @@ import { Button,
 import * as React from "react"; 
 import {useEffect} from "react"; 
 import { AddSquare16Regular, AddSquareRegular, FluentIconsProps, SearchRegular, SubtractSquare16Regular, SubtractSquareRegular } from "@fluentui/react-icons";
-import { LookupView, useEntityMetadata, useLookupViews, useRecordService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
+import { LookupView, useEntityMetadata, useLookupViews, useMetadataService, useRecordService, useViewService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
 import { groupBy } from "../utility";
-import { ViewSelector } from "./ViewSelector";
+import ViewSelector  from "./ViewSelector";
 import { SearchTextBox } from "./SearchTextBox";
 import { RecordTag } from "./RecordTag";
 import { EntityIcon } from "./EntityIcon";
+import { FetchXmlQuery, LinkEntity } from "../common/fetchXmlQuery";
+import { IEntityMetadataService } from "../services/entityMetadataService";
 const useStyles = makeStyles({
     container: {
         "> div > span ": { display:"none" },
@@ -84,25 +86,32 @@ class GroupedEntity implements ComponentFramework.WebApi.Entity{
     childEntities:ComponentFramework.WebApi.Entity[];
     name:string;
 }
-
-const getFormattedField = (field:string,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
-    const amd = entityMetadata.Attributes.getByName(field);
-   
+const getFormattedSuffix =(property:string,amd:any)=>{
     switch(amd.AttributeType){
         case 0:
         case 2:
-
         case 8:
         case 9:
         case 11:
         case 13:
-            return `${field}@OData.Community.Display.V1.FormattedValue`;
+            return `${property}@OData.Community.Display.V1.FormattedValue`;
         case 6:
         case 1:
-            return `_${field}_value@OData.Community.Display.V1.FormattedValue`
+            return `_${property}_value@OData.Community.Display.V1.FormattedValue`
         default:
-            return field;
+            return property;
     }
+}
+const getRelatedFormattedField =(field:string,linkEntity:LinkEntity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
+    const [property,relatedproperty] = field.split('.');
+    const amd = entityMetadata.Attributes.getByName(field);
+    let formattedSuffix = getFormattedSuffix(relatedproperty,amd);
+    return `${linkEntity.alias}.${formattedSuffix}`;
+    
+}
+const getFormattedField = (field:string,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
+    const amd = entityMetadata.Attributes.getByName(field);
+    return getFormattedSuffix(field,amd);
 }
 const noValue = "(none)";
 const getDescriptionForRecord = (record:ComponentFramework.WebApi.Entity,fields:string[]) => {
@@ -111,6 +120,9 @@ const getDescriptionForRecord = (record:ComponentFramework.WebApi.Entity,fields:
     }
     const description = fields.map(f => record[f]).filter(v => v !== undefined && v !== null).join(' - ');
     return description === "" ? undefined: description;
+}
+const distinctStringArray = (values:string[]) => {
+    return Array.from(new Set(values));
 }
 const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata,viewFields:string[],parentValue?:any):CustomTreeItem[] => {
     let beautifyData:CustomTreeItem[] = [];
@@ -157,8 +169,10 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
     const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
     const styles = useStyles();
     const [views,isViewLoading] = useLookupViews(etn);
-    const [entityMetadata,setEntityMetadata] = useEntityMetadata(etn,controlSettings.groupby);
+    const [entityMetadata] = useEntityMetadata(etn,controlSettings.groupby);
     const recordService = React.useMemo(() => useRecordService(),[]);
+    const viewService = React.useMemo(() => useViewService(),[]);
+    const metadataService = React.useMemo(() => useMetadataService(),[]);
     const [openItems,setOpenItems] = React.useState<Iterable<TreeItemValue>>([]);
     const [filterText,setFilterText] = React.useState("");
     const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
@@ -206,16 +220,32 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         setIsLoading(true);
         
         // get the data from the api
-        const data = await recordService.getRecordsByView(entityMetadata!.LogicalName ,entityMetadata!.PrimaryNameAttribute, currentView!.viewId,controlSettings.groupby,filterText);
+        const viewFetchXml = await viewService.getFetchXmlFromViewId(currentView!.viewId);
+        const fetchQuery = new FetchXmlQuery(metadataService);
+        fetchQuery.LoadFrom(viewFetchXml);
+        await fetchQuery.addAttributes(...controlSettings.groupby);
+        fetchQuery.addFilterSearch(entityMetadata!.PrimaryNameAttribute,filterText);
+        const data = await recordService.getRecordsByFetchXml(entityMetadata!.LogicalName,fetchQuery.toString());
         const reservedFields:string[] = [...controlSettings.groupby,entityMetadata!.PrimaryNameAttribute,entityMetadata!.PrimaryIdAttribute];
-        let viewFields = recordService.getViewFields(currentView!.viewId).filter(f => !reservedFields.includes(f));//exclude columns that is already used in the component.
+        let viewFields = fetchQuery.getTopLevelAttributes().filter(f => !reservedFields.includes(f));//exclude columns that is already used in the component.
         if(viewFields.length > 2) {//take only the first two
             viewFields = viewFields.slice(0,2);
         }
-        
+        const relatedLookupColums = distinctStringArray(controlSettings.groupby.filter(c => c.includes('.')));
+        const relatedFormattedColumns:string[] = []
+        for(const relatedColumn of relatedLookupColums){
+            const [sourceField,property,type] = relatedColumn.split('.');
+            const linkEntity = fetchQuery.getLinkEntity(sourceField);  
+            const linkEntityMetadata = await metadataService.getEntityMetadata(linkEntity.entityType,false,linkEntity.columns); 
+            relatedFormattedColumns.push(getRelatedFormattedField(property,linkEntity,linkEntityMetadata));
+        }
+        const nonRelatedFormattedFields = controlSettings.groupby.filter(s => !s.includes('.')).map((s) =>{
+            return getFormattedField(s,entityMetadata!);
+        })
+        const formattedFields =nonRelatedFormattedFields.concat(relatedFormattedColumns);
         const emd = await xrmContext.utils.getEntityMetadata(etn,[...controlSettings.groupby,...viewFields]);
         // convert the data to json
-        const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...controlSettings.groupby.map((s) => getFormattedField(s,entityMetadata!))) as any;    
+        const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...formattedFields); 
         // set state with the result
         const treeItems = MapToCustomTreeItem(groupedData,entityMetadata!,viewFields.map(f => getFormattedField(f,emd)));
         setGroupedRecords(treeItems);
