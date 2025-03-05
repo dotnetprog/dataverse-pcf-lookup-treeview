@@ -104,16 +104,16 @@ export class FetchXmlQuery{
     }
     private getAllElementsFromXPathResult(result:XPathResult){
         const array = [];
-        let val:HTMLElement = result.iterateNext() as HTMLElement;
+        let val:Element = result.iterateNext() as Element;
         do{
             if(val){
                 array.push(val);
             }
-            val = result.iterateNext() as HTMLElement;
+            val = result.iterateNext() as Element;
         }while(val);
         return array;
     }
-    private _createfetchXmlAttribute(attribute:string):HTMLElement{
+    private _createfetchXmlAttribute(attribute:string):Element{
         const attributeElement = this._xmlDoc.createElement('attribute');
         attributeElement.setAttribute('name',attribute);
         return attributeElement;
