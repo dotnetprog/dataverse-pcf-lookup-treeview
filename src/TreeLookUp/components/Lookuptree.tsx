@@ -3,8 +3,9 @@ import * as React from "react";
 import { useState } from "react";
 import { SearchButton } from "./SearchButton";
 import { FluentProvider, webLightTheme,webDarkTheme } from '@fluentui/react-components';
-import { useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
+import { useEntityMetadata, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
 import FieldSecured  from "./FieldSecured";
+import { RecordTag } from "./RecordTag";
 
 export interface ILookuptreeProps {
     entityName:string,
@@ -32,14 +33,15 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
     const xrmContext = useXrm();
     const [recordReference,setRecordReference] = useState(props.currentrecord);
     const lookUpSettings = useXrmControlSettings();
+    const [entityMetadata] = useEntityMetadata(props.entityName);
     if(recordReference?.id !== props.currentrecord?.id){
         setRecordReference(props.currentrecord);
     }
-    const openSelectedRecord = () => {
+    const openSelectedRecord = (v:ComponentFramework.LookupValue) => {
         console.log('open selected record called.');
         xrmContext.navigation.openForm({
-            entityName:recordReference?.entityType!,
-            entityId: recordReference?.id!,
+            entityName:v?.entityType!,
+            entityId: v?.id!,
             openInNewWindow:false
         });
     };
@@ -62,13 +64,10 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
      <FluentProvider style={{width:'100%'}} theme={webLightTheme}>
         {lookUpSettings.isReadable ? <div style={cstyle}>
             
-            {recordReference?.id !== undefined && recordReference?.id !== null &&
-            <InteractionTag style={{width:'100%'}} value={recordReference?.id} key={recordReference?.id} appearance="brand">
-                <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{recordReference?.name}</InteractionTagPrimary>    
-                {!lookUpSettings.isReadOnly && lookUpSettings.isEditable && <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />}
-            </InteractionTag>}
-            {recordReference?.id == undefined && <div style={{width:'100%'}}> ---</div>
-            }
+            {recordReference?.id !== undefined && recordReference?.id !== null && entityMetadata &&
+            <RecordTag entityMetadata={entityMetadata!} style={{width:'100%',marginTop:'5px'}} isUnderline={true} onTagClick={openSelectedRecord} recordLookup={recordReference} onClear={!lookUpSettings.isReadOnly && lookUpSettings.isEditable ? clearRecord : undefined }   />
+           }
+            {recordReference?.id == undefined && <div style={{width:'100%'}}> ---</div>}
             <SearchButton disabled={lookUpSettings.isReadOnly || !lookUpSettings.isEditable} style={bstyle} onSelectedValue={onRecordSelected} selectedRecord={recordReference} />
         </div> : <FieldSecured tag="input-secured" />}
        
@@ -76,3 +75,8 @@ export const Lookuptree:React.FC<ILookuptreeProps> = (props:ILookuptreeProps) =>
     )
       
 };  
+
+/* <InteractionTag style={{width:'100%'}} value={recordReference?.id} key={recordReference?.id} appearance="brand">
+                <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{recordReference?.name}</InteractionTagPrimary>    
+                {!lookUpSettings.isReadOnly && lookUpSettings.isEditable && <InteractionTagSecondary onClick={clearRecord} aria-label="remove" />}
+            </InteractionTag>*/

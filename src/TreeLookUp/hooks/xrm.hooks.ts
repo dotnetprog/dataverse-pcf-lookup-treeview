@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { XrmContext } from "../components/XrmContextProvider";
 import { ContextRecordService, FakeRecordService, IRecordService } from "../services/recordService";
 import { LookupSettings } from "../ControlSettings";
@@ -48,10 +48,10 @@ export function useXrmControlSettings():LookupSettings{
 }
 export function useEntityMetadata(etn:string,attributes?:string[]):[ComponentFramework.PropertyHelper.EntityMetadata | undefined, React.Dispatch<React.SetStateAction<ComponentFramework.PropertyHelper.EntityMetadata | undefined>>]{
     const [entityMetadata,setEntityMetadata] = useState<ComponentFramework.PropertyHelper.EntityMetadata>();
-    const xrmContext = useXrm();
+    const mdService = useMemo(() => useMetadataService(),[]);
     useEffect(() => {
         const fetchEMD = async () => {
-            const emd = await xrmContext!.utils.getEntityMetadata(etn,attributes);
+            const emd = await mdService.getEntityMetadata(etn,false,attributes);
             setEntityMetadata(emd);
         }
         fetchEMD();

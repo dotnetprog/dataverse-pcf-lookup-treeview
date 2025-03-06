@@ -102,10 +102,25 @@ const getFormattedSuffix =(property:string,amd:any)=>{
             return property;
     }
 }
+const getRelatedFormattedSuffix =(property:string,amd:any)=>{
+    switch(amd.AttributeType){
+        case 0:
+        case 2:
+        case 8:
+        case 9:
+        case 11:
+        case 13:
+        case 6:
+        case 1:
+            return `${property}@OData.Community.Display.V1.FormattedValue`;
+        default:
+            return property;
+    }
+}
 const getRelatedFormattedField =(field:string,linkEntity:LinkEntity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
     const [property,relatedproperty] = field.split('.');
-    const amd = entityMetadata.Attributes.getByName(field);
-    let formattedSuffix = getFormattedSuffix(relatedproperty,amd);
+    const amd = entityMetadata.Attributes.getByName(relatedproperty);
+    let formattedSuffix = getRelatedFormattedSuffix(relatedproperty,amd);
     return `${linkEntity.alias}.${formattedSuffix}`;
     
 }
@@ -231,18 +246,20 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         if(viewFields.length > 2) {//take only the first two
             viewFields = viewFields.slice(0,2);
         }
-        const relatedLookupColums = distinctStringArray(controlSettings.groupby.filter(c => c.includes('.')));
-        const relatedFormattedColumns:string[] = []
-        for(const relatedColumn of relatedLookupColums){
-            const [sourceField,property,type] = relatedColumn.split('.');
-            const linkEntity = fetchQuery.getLinkEntity(sourceField);  
-            const linkEntityMetadata = await metadataService.getEntityMetadata(linkEntity.entityType,false,linkEntity.columns); 
-            relatedFormattedColumns.push(getRelatedFormattedField(property,linkEntity,linkEntityMetadata));
+        metadataService.clearCache();
+        const formattedFields:string[] = [];
+        for(const c of controlSettings.groupby){
+            if(c.includes('.')){
+                const [sourceField] = c.split('.');
+                const linkEntity = fetchQuery.getLinkEntity(sourceField);  
+                const linkEntityMetadata = await metadataService.getEntityMetadata(linkEntity.entityType,false,linkEntity.columns); 
+                formattedFields.push(getRelatedFormattedField(c,linkEntity,linkEntityMetadata));
+            }else{
+                formattedFields.push(getFormattedField(c,entityMetadata!));
+            }
         }
-        const nonRelatedFormattedFields = controlSettings.groupby.filter(s => !s.includes('.')).map((s) =>{
-            return getFormattedField(s,entityMetadata!);
-        })
-        const formattedFields =nonRelatedFormattedFields.concat(relatedFormattedColumns);
+
+       
         const emd = await xrmContext.utils.getEntityMetadata(etn,[...controlSettings.groupby,...viewFields]);
         // convert the data to json
         const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...formattedFields); 
@@ -320,7 +337,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
                 Collapse All
             </Button>
         </div>
-        {isLoading ? 
+        {isLoading || !entityMetadata ? 
          <Spinner appearance="primary" label="Loading data..." /> : 
          <FlatTree {...flatTree.getTreeProps()} aria-label="Selection">
              {Array.from(flatTree.items(), (flatTreeItem) => {
@@ -330,7 +347,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
                 <FlatTreeItem className={ flatTreeItem.itemType === 'branch'? styles.container : undefined} {...treeItemProps} key={flatTreeItem.value}>
                     {flatTreeItem.itemType === 'branch' ? 
                     <TreeItemLayout aside={<CounterBadge appearance="filled" size="medium">{count}</CounterBadge>}>{content}</TreeItemLayout>:
-                    <TreeItemLayout><RecordTag icon={<EntityIcon entityMetadata={entityMetadata!} />} onTagClick={openRecord} text={content} recordLookup={lookup!} description={description} /></TreeItemLayout>
+                    <TreeItemLayout><RecordTag entityMetadata={entityMetadata}  onTagClick={openRecord} text={content} recordLookup={lookup!} description={description} /></TreeItemLayout>
                     }
                     
                 </FlatTreeItem>
@@ -338,16 +355,14 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
             })}
             </FlatTree> 
             }
-            <Divider style={{width:'99%',position:'absolute',bottom:0}}  />
+
        
         </DialogContent>
         <DialogActions style={{gridColumn:'1/-1',justifySelf:'normal'} } fluid={true}>
-        <Field style={{width:'100%',display:'block'}} className={styles.field} orientation="horizontal"
-                label="Current selected record">{selectedRecord !== undefined && selectedRecord !== null &&
-                <InteractionTag value={selectedRecord.id} key={selectedRecord?.id} appearance="brand">
-                                <InteractionTagPrimary style={{textDecoration:'underline'}} onClick={openSelectedRecord}>{selectedRecord?.name}</InteractionTagPrimary>    
-
-                            </InteractionTag>
+        <Field style={{width:'100%',display:'flex'}} className={styles.field} orientation="horizontal"
+                label="Current selected record">{selectedRecord !== undefined && selectedRecord !== null && entityMetadata &&
+                    <RecordTag entityMetadata={entityMetadata} style={{marginTop:'2px'}} onTagClick={openRecord} recordLookup={selectedRecord} isUnderline={true} />
+                
              }</Field>
             <DialogTrigger>
                 <Button disabled={disableSelectBtn} onClick={onSelectClick} appearance="primary">Select</Button>
@@ -362,6 +377,6 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
        
     );
 };
-/*
 
-            */
+           /*  <Divider style={{width:'99%',position:'absolute',bottom:0}}  /> */
+           
