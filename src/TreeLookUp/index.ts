@@ -1,8 +1,6 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
-import { XrmContext } from "./components/XrmContextProvider";
 import * as React from "react";
-import { ContextRecordService, FakeRecordService, IRecordService } from "./services/recordService";
-import { ILookuptreeProps, Lookuptree } from "./components/Lookuptree";
+import { App, AppProps } from "./App";
 
 export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOutputs> {
     private notifyOutputChanged: () => void;
@@ -43,9 +41,9 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
             this._currentValue = null;
         }
     }
-    private onValueChangedFromControl(value:ComponentFramework.LookupValue | null) {
+    private onValueChangedFromControl(value?:ComponentFramework.LookupValue) {
         console.log("value selected: ",value);
-        this._currentValue = value;
+        this._currentValue = value ?? null;
         this.notifyOutputChanged();
     }
     private isLocalEnvironment():boolean{
@@ -71,14 +69,11 @@ export class TreeLookUp implements ComponentFramework.ReactControl<IInputs, IOut
     public updateView(context: ComponentFramework.Context<IInputs>): React.ReactElement {
         this.setCurrentValueFromContext(context);
         this.testContext(context);
-        const props: ILookuptreeProps = { 
-            currentrecord:this._currentValue,
-            entityName:context.parameters.MainLookUp.getTargetEntityType(),
-            defaultview:'',
-            preSearch:'',
-            onValueChange: this.onValueChangedFromControl.bind(this)
+        const props: AppProps = { 
+            context:context,
+            onChange:this.onValueChangedFromControl.bind(this)
         };
-       return React.createElement(XrmContext.Provider,{value:context},React.createElement(Lookuptree, props));
+       return React.createElement(App,props);
     }
 
     /**

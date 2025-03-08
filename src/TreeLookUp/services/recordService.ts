@@ -1,47 +1,10 @@
-import { IEntityMetadataService } from "./entityMetadataService";
-import * as utilities from "../utils";
 
-const mockContactDataset:ComponentFramework.WebApi.Entity[] = [
-    {
-        firstname:'John',
-        lastname:'Doe',
-        customertypecode:1
-    },
-    {
-        firstname:'Eric',
-        lastname:'Bonin',
-        customertypecode:1
-    },
-    {
-        firstname:'Jean',
-        lastname:'Dumas',
-        customertypecode:1
-    },
-    {
-        firstname:'Celine',
-        lastname:'Lavache',
-        customertypecode:2
-    },
-    {
-        firstname:'Gucci',
-        lastname:'Dior',
-        customertypecode:3
-    },
-    {
-        firstname:'Italia',
-        lastname:'Milano',
-        customertypecode:3
-    }
-];
+
+
 
 
 export interface IRecordService {
     getRecordsByFetchXml(entityName:string,fetchXml:string):Promise<ComponentFramework.WebApi.Entity[]>
-}
-export class FakeRecordService implements IRecordService {
-    getRecordsByFetchXml(entityName:string,fetchXml:string): Promise<ComponentFramework.WebApi.Entity[]> {
-        return new Promise((resolve,reject) => {resolve(mockContactDataset);});
-    }
 }
 
 export class ContextRecordService implements IRecordService {

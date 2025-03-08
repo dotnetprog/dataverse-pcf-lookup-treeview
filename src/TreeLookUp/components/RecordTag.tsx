@@ -1,6 +1,5 @@
 import { InteractionTag, InteractionTagPrimary, InteractionTagSecondary, Slot } from "@fluentui/react-components"
 import * as React from "react"
-import { useEntityMetadata } from "../hooks/xrm.hooks";
 import { EntityIcon } from "./EntityIcon";
 
 

@@ -8,7 +8,8 @@ import {
     tokens,
     useId,
   } from "@fluentui/react-components";
-import { LookupView } from "../hooks/xrm.hooks";
+import { LookupView } from "../hooks";
+
 
 
 

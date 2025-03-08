@@ -1,4 +1,4 @@
-import { LookupView } from "../hooks/xrm.hooks";
+
 type viewLists = Record<string,string>;
 export interface IViewService {
     getFetchXmlFromViewId(viewId:string):Promise<string>

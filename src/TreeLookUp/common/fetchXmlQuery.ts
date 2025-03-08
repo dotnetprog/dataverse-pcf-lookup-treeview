@@ -102,6 +102,117 @@ export class FetchXmlQuery{
             
         }
     }
+    private getExistingOrCreateNewLinkEntity(to:string,name:string,from:string,alias?:string) {
+        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const xpathResult = this._xmlDoc.evaluate(`/fetch/entity/link-entity[@to='${to}' and @from='${from}' and @name='${name}' and @link-type='inner']`,this._xmlDoc,null,XPathResult.ANY_TYPE);
+        let linkEntity = xpathResult.iterateNext() as Element;
+        if(linkEntity) return linkEntity;
+
+        linkEntity = this._xmlDoc.createElement('link-entity');
+        linkEntity.setAttribute('name', name);
+        linkEntity.setAttribute('from', from);
+        linkEntity.setAttribute('to', to);
+        linkEntity.setAttribute('link-type','inner');
+        if(alias)
+            linkEntity.setAttribute('alias', alias);
+        entityElement?.appendChild(linkEntity);
+        return linkEntity;
+    }
+    addDependantFilter(rootEntityMD:ComponentFramework.PropertyHelper.EntityMetadata,relationshipName:string,dependantValue?:ComponentFramework.LookupValue){
+        if(!dependantValue || !relationshipName){return;}
+        this._xmlDoc.querySelectorAll('link-entity[alias="dependent"]').forEach(el => el.remove())
+        
+        const manytoonerelationship = rootEntityMD.ManyToOneRelationships?.getByName(relationshipName);
+        const onetomanyrelationship = rootEntityMD.OneToManyRelationships?.getByName(relationshipName);
+        const manytomanyrelationship = rootEntityMD.ManyToManyRelationships?.getByName(relationshipName);
+        const baseEntityName = this.getQueryEntityName();
+        const linkentity = manytoonerelationship
+            ? this.getManyToOneLinkEntity(manytoonerelationship,dependantValue)
+            : (onetomanyrelationship
+                ? this.getOneToManyLinkEntity(onetomanyrelationship,baseEntityName,dependantValue)
+                : this.getManyToManyLinkEntity(manytomanyrelationship,baseEntityName,dependantValue));
+    }
+   
+    private getManyToOneLinkEntity (manytoonerelationship:any,dependantValue:ComponentFramework.LookupValue) :Element {
+        const from = `${dependantValue.entityType}id`;
+        const to = manytoonerelationship.ReferencingAttribute
+    
+        const linkentity = this.getExistingOrCreateNewLinkEntity(to,dependantValue.entityType,from,'dependent');
+
+        const filter = this._xmlDoc.createElement('filter');
+        filter.setAttribute('type', 'and');
+    
+        const condition = this._xmlDoc.createElement('condition')
+        condition.setAttribute('attribute', `${from}`)
+        condition.setAttribute('operator', 'eq')
+        condition.setAttribute('value', dependantValue.id);
+    
+        filter.appendChild(condition);
+        linkentity.appendChild(filter);
+        return linkentity;
+      }
+    
+      private getOneToManyLinkEntity (onetomanyrelationship:any,baseEntityName:string,dependantValue:ComponentFramework.LookupValue) :Element {
+        const from = onetomanyrelationship.ReferencingAttribute;
+        const to = `${baseEntityName}id`;
+    
+        const linkentity = this.getExistingOrCreateNewLinkEntity(to,dependantValue.entityType,from,'dependent');
+      
+    
+        const filter = this._xmlDoc.createElement('filter')
+        filter.setAttribute('type', 'and')
+    
+        const condition = this._xmlDoc.createElement('condition');
+        condition.setAttribute('attribute', `${dependantValue.entityType}id`);
+        condition.setAttribute('operator', 'eq');
+        condition.setAttribute('value', dependantValue.id);
+    
+        filter.appendChild(condition)
+        linkentity.appendChild(filter);
+        return linkentity;
+      }
+    
+      private getManyToManyLinkEntity (manytomanyrelationship:any,baseEntityName:string,dependantValue:ComponentFramework.LookupValue) :Element {
+        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const intersectentity = manytomanyrelationship.IntersectEntityName
+        const intersectFromTo = manytomanyrelationship.Entity1LogicalName === baseEntityName
+          ? manytomanyrelationship.Entity1IntersectAttribute
+          : manytomanyrelationship.Entity2IntersectAttribute
+    
+        const dependententity = manytomanyrelationship.Entity1LogicalName === baseEntityName
+          ? manytomanyrelationship.Entity2LogicalName
+          : manytomanyrelationship.Entity1LogicalName
+    
+        const dependententityFromTo = manytomanyrelationship.Entity1LogicalName === baseEntityName
+          ? manytomanyrelationship.Entity2IntersectAttribute
+          : manytomanyrelationship.Entity1IntersectAttribute
+    
+        const linkentity1 = this._xmlDoc.createElement('link-entity')
+        linkentity1.setAttribute('name', intersectentity)
+        linkentity1.setAttribute('from', intersectFromTo)
+        linkentity1.setAttribute('to', intersectFromTo)
+    
+        const linkentity2 = this._xmlDoc.createElement('link-entity')
+        linkentity2.setAttribute('name', dependententity)
+        linkentity2.setAttribute('from', dependententityFromTo)
+        linkentity2.setAttribute('to', dependententityFromTo)
+        linkentity2.setAttribute('alias', 'dependent')
+    
+        const filter = this._xmlDoc.createElement('filter')
+        filter.setAttribute('type', 'and')
+    
+        const condition = this._xmlDoc.createElement('condition')
+        condition.setAttribute('attribute', dependententityFromTo)
+        condition.setAttribute('operator', 'eq')
+        condition.setAttribute('value', dependantValue.id)
+    
+        filter.appendChild(condition)
+        linkentity2.appendChild(filter)
+        linkentity1.appendChild(linkentity2);
+        entityElement?.appendChild(linkentity1);
+        return linkentity1;
+      }
+    
     private getAllElementsFromXPathResult(result:XPathResult){
         const array = [];
         let val:Element = result.iterateNext() as Element;

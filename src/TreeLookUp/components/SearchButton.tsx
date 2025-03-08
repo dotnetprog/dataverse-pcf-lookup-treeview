@@ -6,36 +6,28 @@ import { Button,
      DialogSurface, 
      DialogTitle, 
      DialogTrigger, 
-     Tree, 
-     TreeItem, 
-     TreeItemLayout, TreeItemValue, TreeOpenChangeData, TreeOpenChangeEvent,makeStyles, Spinner, tokens,  
+     TreeItemLayout, TreeItemValue, TreeOpenChangeData, TreeOpenChangeEvent,makeStyles, Spinner,  
      DialogOpenChangeEvent,
      DialogOpenChangeData,
      FlatTree,
      FlatTreeItem,
-     HeadlessFlatTreeItemProps,
      useHeadlessFlatTree_unstable,
      TreeCheckedChangeData,
      TreeCheckedChangeEvent,
-     Tag,
-     InteractionTag,
-     InteractionTagPrimary,
-     InteractionTagSecondary,
      Field,
      Divider,
-     Badge,
      CounterBadge,} from "@fluentui/react-components";
 import * as React from "react"; 
 import {useEffect} from "react"; 
-import { AddSquare16Regular, AddSquareRegular, FluentIconsProps, SearchRegular, SubtractSquare16Regular, SubtractSquareRegular } from "@fluentui/react-icons";
-import { LookupView, useEntityMetadata, useLookupViews, useMetadataService, useRecordService, useViewService, useXrm, useXrmControlSettings } from "../hooks/xrm.hooks";
+import { AddSquareRegular, FluentIconsProps, SearchRegular, SubtractSquareRegular } from "@fluentui/react-icons";
+import { LookupView, useEntityMetadata, useLookupViews } from "../hooks";
 import { groupBy } from "../utility";
 import ViewSelector  from "./ViewSelector";
 import { SearchTextBox } from "./SearchTextBox";
 import { RecordTag } from "./RecordTag";
-import { EntityIcon } from "./EntityIcon";
-import { FetchXmlQuery, LinkEntity } from "../common/fetchXmlQuery";
-import { IEntityMetadataService } from "../services/entityMetadataService";
+import { FetchXmlQuery } from "../common/fetchXmlQuery";
+import { PowerAppsTreeItem } from "../services/PowerAppsTreeItemService";
+import { usePowerAppsContextContext } from "./PowerAppsContextProvider";
 const useStyles = makeStyles({
     container: {
         "> div > span ": { display:"none" },
@@ -81,118 +73,23 @@ const useStyles = makeStyles({
 const IconProps: FluentIconsProps = {
     transform:'scale (-1, 1)'
 };
-type CustomTreeItem = HeadlessFlatTreeItemProps & { description?:string,content: string,count:number,lookup?:ComponentFramework.LookupValue };
-class GroupedEntity implements ComponentFramework.WebApi.Entity{
-    childEntities:ComponentFramework.WebApi.Entity[];
-    name:string;
-}
-const getFormattedSuffix =(property:string,amd:any)=>{
-    switch(amd.AttributeType){
-        case 0:
-        case 2:
-        case 8:
-        case 9:
-        case 11:
-        case 13:
-            return `${property}@OData.Community.Display.V1.FormattedValue`;
-        case 6:
-        case 1:
-            return `_${property}_value@OData.Community.Display.V1.FormattedValue`
-        default:
-            return property;
-    }
-}
-const getRelatedFormattedSuffix =(property:string,amd:any)=>{
-    switch(amd.AttributeType){
-        case 0:
-        case 2:
-        case 8:
-        case 9:
-        case 11:
-        case 13:
-        case 6:
-        case 1:
-            return `${property}@OData.Community.Display.V1.FormattedValue`;
-        default:
-            return property;
-    }
-}
-const getRelatedFormattedField =(field:string,linkEntity:LinkEntity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
-    const [property,relatedproperty] = field.split('.');
-    const amd = entityMetadata.Attributes.getByName(relatedproperty);
-    let formattedSuffix = getRelatedFormattedSuffix(relatedproperty,amd);
-    return `${linkEntity.alias}.${formattedSuffix}`;
-    
-}
-const getFormattedField = (field:string,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) => {
-    const amd = entityMetadata.Attributes.getByName(field);
-    return getFormattedSuffix(field,amd);
-}
-const noValue = "(none)";
-const getDescriptionForRecord = (record:ComponentFramework.WebApi.Entity,fields:string[]) => {
-    if(fields.length === 0){
-        return undefined;
-    }
-    const description = fields.map(f => record[f]).filter(v => v !== undefined && v !== null).join(' - ');
-    return description === "" ? undefined: description;
-}
-const distinctStringArray = (values:string[]) => {
-    return Array.from(new Set(values));
-}
-const MapToCustomTreeItem = (obj:any,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata,viewFields:string[],parentValue?:any):CustomTreeItem[] => {
-    let beautifyData:CustomTreeItem[] = [];
 
-    obj.forEach((value:any,key:any,m:any) => {
-        let klabel = !key ? noValue : key;
-        let d:CustomTreeItem = {
-            content:klabel,
-            value:parentValue ?parentValue+ klabel: klabel,
-            parentValue:parentValue,
-            count:0,
-            itemType:"branch"
-        }; 
-        beautifyData.push(d);
-        if(value.length){
-            d.count = value.length;
-            value.forEach((v:any) => {
-                beautifyData.push({
-                    itemType:"leaf",
-                    value:v[entityMetadata.PrimaryIdAttribute],
-                    parentValue:d.value,
-                    content:v[entityMetadata.PrimaryNameAttribute],
-                    count:0,
-                    lookup:{ entityType:entityMetadata.LogicalName,id:v[entityMetadata.PrimaryIdAttribute],name: v[entityMetadata.PrimaryNameAttribute]},
-                    description:getDescriptionForRecord(v,viewFields)
-                });
-            });
-        }else{
-            const childrows = MapToCustomTreeItem(value,entityMetadata,viewFields,d.value);
-            beautifyData = beautifyData.concat(childrows);
-        }
-    });
-   
-    return beautifyData;
-}
 export type SearchButtonProps = ButtonProps &
 { 
-    selectedRecord:ComponentFramework.LookupValue | null;
+    entityType:string;
+    selectedRecord?:ComponentFramework.LookupValue;
     onSelectedValue(value:ComponentFramework.LookupValue): void;
 }
-export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selectedRecord,...btnprops}) => {
-    const xrmContext = useXrm();
-    const controlSettings = useXrmControlSettings();
-    const etn = xrmContext!.parameters.MainLookUp.getTargetEntityType();
+export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelectedValue,selectedRecord,...btnprops}) => {
+    const powerAppsService = usePowerAppsContextContext();
     const styles = useStyles();
-    const [views,isViewLoading] = useLookupViews(etn);
-    const [entityMetadata] = useEntityMetadata(etn,controlSettings.groupby);
-    const recordService = React.useMemo(() => useRecordService(),[]);
-    const viewService = React.useMemo(() => useViewService(),[]);
-    const metadataService = React.useMemo(() => useMetadataService(),[]);
+    const [views,isViewLoading] = useLookupViews(entityType);
+    const [entityMetadata] = useEntityMetadata(entityType,powerAppsService.GroupedBy);
     const [openItems,setOpenItems] = React.useState<Iterable<TreeItemValue>>([]);
     const [filterText,setFilterText] = React.useState("");
     const [currentView,setCurrentView] = React.useState<LookupView | null>(null)
     const [isOpened,setIsOpened] = React.useState(false);
-    const [groupedRecords,setGroupedRecords] = React.useState<CustomTreeItem[]>([]);
+    const [groupedRecords,setGroupedRecords] = React.useState<PowerAppsTreeItem[]>([]);
     const [disableSelectBtn,setDisableSelectBtn] = React.useState(true);
     const [isLoading,setIsLoading] = React.useState(true);
     const onSelectChange = (event: TreeCheckedChangeEvent, data: TreeCheckedChangeData)=>{
@@ -217,13 +114,10 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         }
         const treeItemFound = groupedRecords.find((gr) => gr.value === value);
         onSelectedValue({
-            entityType: xrmContext.parameters.MainLookUp.getTargetEntityType(),
+            entityType: entityType,
             id:value.toString(),
             name:treeItemFound?.content
         });
-        
-
-        
     } 
     
     
@@ -235,36 +129,37 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         setIsLoading(true);
         
         // get the data from the api
-        const viewFetchXml = await viewService.getFetchXmlFromViewId(currentView!.viewId);
-        const fetchQuery = new FetchXmlQuery(metadataService);
+        const viewFetchXml = await powerAppsService.viewService.getFetchXmlFromViewId(currentView!.viewId);
+        const fetchQuery = new FetchXmlQuery(powerAppsService.metadataService);
         fetchQuery.LoadFrom(viewFetchXml);
-        await fetchQuery.addAttributes(...controlSettings.groupby);
+        await fetchQuery.addAttributes(...powerAppsService.GroupedBy);
         fetchQuery.addFilterSearch(entityMetadata!.PrimaryNameAttribute,filterText);
-        const data = await recordService.getRecordsByFetchXml(entityMetadata!.LogicalName,fetchQuery.toString());
-        const reservedFields:string[] = [...controlSettings.groupby,entityMetadata!.PrimaryNameAttribute,entityMetadata!.PrimaryIdAttribute];
+        fetchQuery.addDependantFilter(entityMetadata!,powerAppsService.filterRelationshipName,powerAppsService.dependentValue);
+        const data = await powerAppsService.recordService.getRecordsByFetchXml(entityMetadata!.LogicalName,fetchQuery.toString());
+        const reservedFields:string[] = [...powerAppsService.GroupedBy,entityMetadata!.PrimaryNameAttribute,entityMetadata!.PrimaryIdAttribute];
         let viewFields = fetchQuery.getTopLevelAttributes().filter(f => !reservedFields.includes(f));//exclude columns that is already used in the component.
         if(viewFields.length > 2) {//take only the first two
             viewFields = viewFields.slice(0,2);
         }
-        metadataService.clearCache();
+        powerAppsService.metadataService.clearCache();
         const formattedFields:string[] = [];
-        for(const c of controlSettings.groupby){
+        for(const c of powerAppsService.GroupedBy){
             if(c.includes('.')){
                 const [sourceField] = c.split('.');
                 const linkEntity = fetchQuery.getLinkEntity(sourceField);  
-                const linkEntityMetadata = await metadataService.getEntityMetadata(linkEntity.entityType,false,linkEntity.columns); 
-                formattedFields.push(getRelatedFormattedField(c,linkEntity,linkEntityMetadata));
+                const linkEntityMetadata = await powerAppsService.metadataService.getEntityMetadata(linkEntity.entityType,false,linkEntity.columns); 
+                formattedFields.push(powerAppsService.getRelatedFormattedField(c,linkEntity,linkEntityMetadata));
             }else{
-                formattedFields.push(getFormattedField(c,entityMetadata!));
+                formattedFields.push(powerAppsService.getFormattedField(c,entityMetadata!));
             }
         }
 
        
-        const emd = await xrmContext.utils.getEntityMetadata(etn,[...controlSettings.groupby,...viewFields]);
+        const emd = await powerAppsService.metadataService.getEntityMetadata(entityType,true,[...powerAppsService.GroupedBy,...viewFields])
         // convert the data to json
         const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...formattedFields); 
         // set state with the result
-        const treeItems = MapToCustomTreeItem(groupedData,entityMetadata!,viewFields.map(f => getFormattedField(f,emd)));
+        const treeItems = powerAppsService.treeItemService.MapToCustomTreeItem(groupedData,entityMetadata!,viewFields.map(f => powerAppsService.getFormattedField(f,emd)));
         setGroupedRecords(treeItems);
         setOpenItems(treeItems.filter(t => t.itemType === "branch").map(t=> t.value));//Always open all branches by default
         setIsLoading(false);
@@ -291,22 +186,8 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         const items = groupedRecords.filter(gr => gr.itemType === 'branch').map(gr => gr.value);
         setOpenItems(items);
     };
-    const openSelectedRecord = () => {
-        console.log('open selected record called.');
-        xrmContext.navigation.openForm({
-            entityName:selectedRecord?.entityType!,
-            entityId: selectedRecord?.id!,
-            openInNewWindow:false
-        });
-    };
-    const openRecord = React.useCallback((record:ComponentFramework.LookupValue) => {
-        console.log('open record');
-        xrmContext.navigation.openForm({
-            entityName:record.entityType,
-            entityId: record.id,
-            openInNewWindow:false
-        });
-    },[]);
+
+   
     const onFilterTextChange = (filter:string) => {
         console.log('filter text: '+filter);
         setFilterText(filter);
@@ -325,7 +206,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         <DialogTitle>Select a record</DialogTitle>
         <DialogContent style={{height:'100%',position:'relative'}} >
         <div className={styles.advancedSectionContainer}>
-            <ViewSelector disabled={!controlSettings.isViewPickerEnabled} views={views} entityName={etn} onViewChange={setCurrentView}/>
+            <ViewSelector disabled={!powerAppsService.isViewPickerEnabled} views={views} entityName={entityType} onViewChange={setCurrentView}/>
             
             <SearchTextBox onChangeText={onFilterTextChange} />
         </div>
@@ -347,7 +228,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
                 <FlatTreeItem className={ flatTreeItem.itemType === 'branch'? styles.container : undefined} {...treeItemProps} key={flatTreeItem.value}>
                     {flatTreeItem.itemType === 'branch' ? 
                     <TreeItemLayout aside={<CounterBadge appearance="filled" size="medium">{count}</CounterBadge>}>{content}</TreeItemLayout>:
-                    <TreeItemLayout><RecordTag entityMetadata={entityMetadata}  onTagClick={openRecord} text={content} recordLookup={lookup!} description={description} /></TreeItemLayout>
+                    <TreeItemLayout><RecordTag entityMetadata={entityMetadata}  onTagClick={powerAppsService.openRecord.bind(powerAppsService)} text={content} recordLookup={lookup!} description={description} /></TreeItemLayout>
                     }
                     
                 </FlatTreeItem>
@@ -361,7 +242,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ onSelectedValue,selec
         <DialogActions style={{gridColumn:'1/-1',justifySelf:'normal'} } fluid={true}>
         <Field style={{width:'100%',display:'flex'}} className={styles.field} orientation="horizontal"
                 label="Current selected record">{selectedRecord !== undefined && selectedRecord !== null && entityMetadata &&
-                    <RecordTag entityMetadata={entityMetadata} style={{marginTop:'2px'}} onTagClick={openRecord} recordLookup={selectedRecord} isUnderline={true} />
+                    <RecordTag entityMetadata={entityMetadata} style={{marginTop:'2px'}} onTagClick={powerAppsService.openRecord.bind(powerAppsService)} recordLookup={selectedRecord} isUnderline={true} />
                 
              }</Field>
             <DialogTrigger>

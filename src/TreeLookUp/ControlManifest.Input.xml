@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="FDNTechsolution" constructor="TreeLookUp" version="0.0.3" display-name-key="TreeLookUp" description-key="TreeLookUp description" control-type="virtual" >
+  <control namespace="FDNTechsolution" constructor="TreeLookUp" version="0.0.4" display-name-key="TreeLookUp" description-key="TreeLookUp description" control-type="virtual" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -20,6 +20,7 @@
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
     <property name="MainLookUp" display-name-key="Main LookUp" description-key="Lookup field to use the control bound with" of-type="Lookup.Simple" usage="bound" required="true" />
     <property name="GroupBy" display-name-key="Group By" description-key="comma seperated list" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="DependentLookupField" display-name-key="Dependent Lookup Field" description-key="Use when Related Records Filtering is set on the Field Properties." of-type="Lookup.Simple" usage="bound" />
     <!--
       Property node's of-type attribute can be of-type-group attribute.
       Example:
