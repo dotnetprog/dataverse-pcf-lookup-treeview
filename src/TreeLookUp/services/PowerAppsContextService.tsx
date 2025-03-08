@@ -58,7 +58,7 @@ export class PowerAppsContextService {
             openInNewWindow:false
         });
     };
-    
+  
     getRelatedFormattedField(field:string,linkEntity:LinkEntity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata){
         const [property,relatedproperty] = field.split('.');
         const amd = entityMetadata.Attributes.getByName(relatedproperty);

@@ -127,7 +127,7 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelected
         }
         console.log('fetching data for tree view.');
         setIsLoading(true);
-        
+      
         // get the data from the api
         const viewFetchXml = await powerAppsService.viewService.getFetchXmlFromViewId(currentView!.viewId);
         const fetchQuery = new FetchXmlQuery(powerAppsService.metadataService);
