@@ -1,5 +1,6 @@
-import { LinkEntity } from "../common/fetchXmlQuery";
+import { FetchXmlQuery, LinkEntity } from "../common/fetchXmlQuery";
 import { IInputs } from "../generated/ManifestTypes";
+import { groupBy } from "../common/utility";
 import { CachedEntityMetadataService, IEntityMetadataService } from "./entityMetadataService";
 import { PowerAppsTreeItemService } from "./PowerAppsTreeItemService";
 import { ContextRecordService, IRecordService } from "./recordService";
@@ -65,6 +66,41 @@ export class PowerAppsContextService {
         let formattedSuffix = this.getRelatedFormattedSuffix(relatedproperty,amd);
         return `${linkEntity.alias}.${formattedSuffix}`;
         
+    }
+    async getTreeData(viewid:string,filterText:string){
+        const viewFetchXml = await this.viewService.getFetchXmlFromViewId(viewid);
+        const fetchQuery = new FetchXmlQuery(this.metadataService);
+        fetchQuery.LoadFrom(viewFetchXml);
+        const entityMetadata = await this.metadataService.getEntityMetadata(fetchQuery.getQueryEntityName(),false,this.GroupedBy);
+        await fetchQuery.addAttributes(...this.GroupedBy);
+        fetchQuery.addFilterSearch(entityMetadata!.PrimaryNameAttribute,filterText);
+        fetchQuery.addDependantFilter(entityMetadata!,this.filterRelationshipName,this.dependentValue);
+        const data = await this.recordService.getRecordsByFetchXml(entityMetadata!.LogicalName,fetchQuery.toString());
+        const reservedFields:string[] = [...this.GroupedBy,entityMetadata!.PrimaryNameAttribute,entityMetadata!.PrimaryIdAttribute];
+        let viewFields = fetchQuery.getTopLevelAttributes().filter(f => !reservedFields.includes(f));//exclude columns that is already used in the component.
+        if(viewFields.length > 2) {//take only the first two
+            viewFields = viewFields.slice(0,2);
+        }
+        this.metadataService.clearCache();
+        const formattedFields:string[] = [];
+        for(const c of this.GroupedBy){
+            if(c.includes('.')){
+                const [sourceField] = c.split('.');
+                const linkEntity = fetchQuery.getLinkEntity(sourceField);  
+                const linkEntityMetadata = await this.metadataService.getEntityMetadata(linkEntity.entityType,false,linkEntity.columns); 
+                formattedFields.push(this.getRelatedFormattedField(c,linkEntity,linkEntityMetadata));
+            }else{
+                formattedFields.push(this.getFormattedField(c,entityMetadata!));
+            }
+        }
+
+       
+        const emd = await this.metadataService.getEntityMetadata(this.mainLookupEntityName,true,[...this.GroupedBy,...viewFields]);
+        // convert the data to json
+        const groupedData  = groupBy<ComponentFramework.WebApi.Entity,string[]>(data,...formattedFields); 
+        // set state with the result
+        const treeItems = this.treeItemService.MapToCustomTreeItem(groupedData,entityMetadata!,viewFields.map(f => this.getFormattedField(f,emd)));
+        return treeItems;
     }
     getFormattedField (field:string,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) {
         const amd = entityMetadata.Attributes.getByName(field);
