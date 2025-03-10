@@ -32,9 +32,6 @@ PowerApps Component framework (PCF) Control that renders a Lookup that allows to
 - Image
 - Formulas/Calculated fields. (Haven't tested , it may work let me know)
 
-
-
-
 ## Configuration
 
 | Configuration Name  | Description | Exemple |
