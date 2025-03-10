@@ -31,8 +31,8 @@ export const Lookuptree = ():JSX.Element => {
         setRecordReference(lv);
         powerAppsService.onChange(lv);
     }
-    let cstyle = {...containerStyles};
-    let bstyle = {...btnStyles};
+    const cstyle = {...containerStyles};
+    const bstyle = {...btnStyles};
     if(recordReference?.id === undefined){
         cstyle.paddingInlineStart = '10px';
         bstyle.marginRight = '14px';

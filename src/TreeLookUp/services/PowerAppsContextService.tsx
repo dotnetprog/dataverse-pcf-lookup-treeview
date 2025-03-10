@@ -65,9 +65,9 @@ export class PowerAppsContextService {
     };
   
     getRelatedFormattedField(field:string,linkEntity:LinkEntity,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata){
-        const [property,relatedproperty] = field.split('.');
-        const amd = entityMetadata.Attributes.getByName(relatedproperty);
-        let formattedSuffix = this.getRelatedFormattedSuffix(relatedproperty,amd);
+        const relatedproperty = field.split('.')[1];
+        const amd:any = entityMetadata?.Attributes?.getByName(relatedproperty);
+        const formattedSuffix = this.getRelatedFormattedSuffix(relatedproperty,amd);
         return `${linkEntity.alias}.${formattedSuffix}`;
         
     }

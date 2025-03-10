@@ -1,6 +1,6 @@
 import * as React from "react"; 
 import {Button, ButtonProps, Field, Input, InputOnChangeData} from '@fluentui/react-components';
-import {DismissRegular, MicRegular, SearchRegular, TextClearFormattingRegular } from "@fluentui/react-icons";
+import {DismissRegular, SearchRegular} from "@fluentui/react-icons";
 
 
 

@@ -16,9 +16,9 @@ export class PowerAppsTreeItemService{
        MapToCustomTreeItem(obj:any,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata,viewFields:string[],parentValue?:any):PowerAppsTreeItem[] {
             let beautifyData:PowerAppsTreeItem[] = [];
         
-            obj.forEach((value:any,key:any,m:any) => {
-                let klabel = !key ? this._noValueLabel : key;
-                let d:PowerAppsTreeItem = {
+            obj.forEach((value:any,key:any) => {
+                const klabel = !key ? this._noValueLabel : key;
+                const d:PowerAppsTreeItem = {
                     content:klabel,
                     value:parentValue ?parentValue+ klabel: klabel,
                     parentValue:parentValue,

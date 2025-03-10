@@ -3,7 +3,6 @@ import * as React from "react";
 import { PowerAppsTreeItem } from "../services/PowerAppsTreeItemService";
 import { RecordTag } from "./RecordTag";
 import { usePowerAppsContextContext } from "./PowerAppsContextProvider";
-import { DatabaseSearch20Regular }  from "@fluentui/react-icons";
 
 const useStyles = makeStyles(
     {

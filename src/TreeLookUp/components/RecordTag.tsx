@@ -1,4 +1,4 @@
-import { InteractionTag, InteractionTagPrimary, InteractionTagSecondary, Slot } from "@fluentui/react-components"
+import { InteractionTag, InteractionTagPrimary, InteractionTagSecondary } from "@fluentui/react-components"
 import * as React from "react"
 import { EntityIcon } from "./EntityIcon";
 

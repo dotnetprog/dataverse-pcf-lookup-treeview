@@ -32,9 +32,9 @@ export class FetchXmlQuery{
     async addAttributes(...columns:string[]){
         const columnsMd = columns.map(c => c.split('.')[0]);
         const rootMd = await this._entityMetadataService.getEntityMetadata(this.getQueryEntityName(),true,columnsMd);
-        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
         const xpathResult = this._xmlDoc.evaluate("/fetch/entity/attribute",this._xmlDoc,null,XPathResult.ANY_TYPE);
-        let attributes = this.getAllElementsFromXPathResult(xpathResult);
+        const attributes = this.getAllElementsFromXPathResult(xpathResult);
         columns.filter(c => !c.includes('.')).forEach((c)=> {
             const attrFound = attributes.find(a => a.getAttribute('name') === c);
             if(!attrFound){
@@ -50,7 +50,7 @@ export class FetchXmlQuery{
     }
     addFilterSearch(attribute:string,filterText:string){
         if(!filterText){return;}
-        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
         const filterElem =  this._xmlDoc.createElement('filter');
         filterElem.setAttribute('type','and');
         const condition = this._xmlDoc.createElement('condition');
@@ -74,7 +74,7 @@ export class FetchXmlQuery{
     private async _addRelatedAttribute(rootEntityMD:ComponentFramework.PropertyHelper.EntityMetadata,relatedField:string){
         const [source,destination,entityType] = relatedField.split('.');
         const xpathResult = this._xmlDoc.evaluate(`/fetch/entity/link-entity[@to='${source}']`,this._xmlDoc,null,XPathResult.ANY_TYPE);
-        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
         const existingLinkEntity = xpathResult.iterateNext() as Element;
         if(existingLinkEntity){
             const existingAttributes = Array.from(existingLinkEntity.getElementsByTagName('attribute')).map(a => a.getAttribute('name'));
@@ -103,7 +103,7 @@ export class FetchXmlQuery{
         }
     }
     private getExistingOrCreateNewLinkEntity(to:string,name:string,from:string,alias?:string) {
-        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
         const xpathResult = this._xmlDoc.evaluate(`/fetch/entity/link-entity[@to='${to}' and @from='${from}' and @name='${name}' and @link-type='inner']`,this._xmlDoc,null,XPathResult.ANY_TYPE);
         let linkEntity = xpathResult.iterateNext() as Element;
         if(linkEntity) return linkEntity;
@@ -126,7 +126,7 @@ export class FetchXmlQuery{
         const onetomanyrelationship = rootEntityMD.OneToManyRelationships?.getByName(relationshipName);
         const manytomanyrelationship = rootEntityMD.ManyToManyRelationships?.getByName(relationshipName);
         const baseEntityName = this.getQueryEntityName();
-        const linkentity = manytoonerelationship
+        return manytoonerelationship
             ? this.getManyToOneLinkEntity(manytoonerelationship,dependantValue)
             : (onetomanyrelationship
                 ? this.getOneToManyLinkEntity(onetomanyrelationship,baseEntityName,dependantValue)
@@ -173,7 +173,7 @@ export class FetchXmlQuery{
       }
     
       private getManyToManyLinkEntity (manytomanyrelationship:any,baseEntityName:string,dependantValue:ComponentFramework.LookupValue) :Element {
-        let entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
+        const entityElement = this._xmlDoc.getRootNode().firstChild?.firstChild;
         const intersectentity = manytomanyrelationship.IntersectEntityName
         const intersectFromTo = manytomanyrelationship.Entity1LogicalName === baseEntityName
           ? manytomanyrelationship.Entity1IntersectAttribute

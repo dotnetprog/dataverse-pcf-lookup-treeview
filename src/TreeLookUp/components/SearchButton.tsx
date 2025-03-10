@@ -22,7 +22,7 @@ import { RecordTag } from "./RecordTag";
 
 import { usePowerAppsContextContext } from "./PowerAppsContextProvider";
 import { PowerAppsTree } from "./PowerAppsTree";
-import { useTreeData } from "../hooks/useTreeData";
+import { useTreeData } from "../hooks";
 import { ErrorMessageBar } from "./ErrorMessageBar";
 const useStyles = makeStyles({
     dialogContainer:{
@@ -70,7 +70,7 @@ export type SearchButtonProps = ButtonProps &
 { 
     entityType:string;
     selectedRecord?:ComponentFramework.LookupValue;
-    onSelectedValue(value:ComponentFramework.LookupValue): void;
+    onSelectedValue:(value:ComponentFramework.LookupValue)=> void;
 }
 export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelectedValue,selectedRecord,...btnprops}) => {
     const powerAppsService = usePowerAppsContextContext();

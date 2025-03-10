@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { usePowerAppsContextContext } from "../components/PowerAppsContextProvider";
-import { FetchXmlQuery } from "../common/fetchXmlQuery";
 import { PowerAppsTreeItem } from "../services/PowerAppsTreeItemService";
 
 

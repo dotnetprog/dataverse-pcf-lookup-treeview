@@ -10,7 +10,7 @@ export function groupBy(objects: readonly any[], ...by: Array<PropertyKey>) {
     const [k0, ...kr] = by;
     const topLevelGroups = new Map<any, any[]>();
     for (const obj of objects) {
-        let k = obj[k0];
+        const k = obj[k0];
         let arr = topLevelGroups.get(k);
         if (!arr) {
             arr = [];
