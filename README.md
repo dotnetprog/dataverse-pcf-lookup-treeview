@@ -17,7 +17,7 @@ PowerApps Component framework (PCF) Control that renders a Lookup that allows to
 | Configuration Name  | Description | Exemple |
 | ------------- | ------------- |------------- |
 | Main LookUp | Lookup field to bound the PCF to  | fdn_insuranceproductid |
-| Group By  | Comma seperated logical attribute names to group the search results by. Supports related lookup fields  | fdn_insurancesubcategory.fdn_insurancecategory,fdn_insurancesubcategory  |
+| Group By  | Comma seperated logical attribute names to group the search results by. Supports related lookup fields  | fdn_insurancesubcategory.fdn_insurancecategory,<br/>fdn_insurancesubcategory  |
 | Dependent Lookup field | When dependent filtering is configured , must bound this configuration with the dependant lookup field | createdby  |
 
 ![image](/docs/TreeLookupConfig.png)
