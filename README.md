@@ -9,7 +9,24 @@ PowerApps Component framework (PCF) Control that renders a Lookup that allows to
 
 ## Features
 
-:heavy_check_mark: Out of the box filtering configuration
+:heavy_check_mark: Out of the box filtering configuration \
+:heavy_check_mark: Out of the box view selector configuration \
+:heavy_check_mark: Out of the box field behavior configuration \
+:heavy_check_mark: Allow users to filter the tree by keywords (Search Text box) \
+:heavy_check_mark: GroupBy supports usage of field from a lookup field. ex: lookupfield.field \
+:heavy_check_mark: GroupBy supports Columns Types:
+- Text (string)
+- Numeric (Integer,Decimal,Money)
+- OptionSet
+- Two Options (Boolean)
+- Lookup
+
+❌ GroupBy **does not** supports Columns Types:
+- MultiOptionSets
+- MultiLookups (ex: email.torecipients)
+- File
+- Image
+
 
 
 ## Configuration
@@ -20,5 +37,6 @@ PowerApps Component framework (PCF) Control that renders a Lookup that allows to
 | Group By  | Comma seperated logical attribute names to group the search results by. Supports related lookup fields  | fdn_insurancesubcategory.fdn_insurancecategory,<br/>fdn_insurancesubcategory  |
 | Dependent Lookup field | When dependent filtering is configured , must bound this configuration with the dependant lookup field | createdby  |
 
+Exemple: \
 ![image](/docs/TreeLookupConfig.png)
 
