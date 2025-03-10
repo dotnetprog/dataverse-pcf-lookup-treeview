@@ -17,7 +17,8 @@ const ClearButton: React.FC<ButtonProps> = (props) => {
   };
 
 export type ISearchTextBoxProps = {
-    onChangeText:(value:string) => void
+    onChangeText:(value:string) => void;
+    LabelText:string;
 }
 
 export const SearchTextBox:React.FC<ISearchTextBoxProps> = (props) => {
@@ -38,7 +39,7 @@ export const SearchTextBox:React.FC<ISearchTextBoxProps> = (props) => {
     const clearTextField = () => {
         setTextValue("");
     }
-    return (<Field label="Filter by keywords">
+    return (<Field label={props.LabelText}>
               <Input onChange={onKeyDown} value={textValue} contentBefore={<SearchRegular />} contentAfter={showClearBtn ? <ClearButton onClick={clearTextField} /> : undefined} />
             </Field>)
 }

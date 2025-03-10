@@ -15,12 +15,11 @@ import * as React from "react";
 import {useEffect} from "react"; 
 import { AddSquareRegular, FluentIconsProps, SearchRegular, SubtractSquareRegular } from "@fluentui/react-icons";
 import { LookupView, useEntityMetadata, useLookupViews } from "../hooks";
-import { groupBy } from "../common/utility";
+
 import ViewSelector  from "./ViewSelector";
 import { SearchTextBox } from "./SearchTextBox";
 import { RecordTag } from "./RecordTag";
-import { FetchXmlQuery } from "../common/fetchXmlQuery";
-import { PowerAppsTreeItem } from "../services/PowerAppsTreeItemService";
+
 import { usePowerAppsContextContext } from "./PowerAppsContextProvider";
 import { PowerAppsTree } from "./PowerAppsTree";
 import { useTreeData } from "../hooks/useTreeData";
@@ -112,14 +111,12 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelected
         setOpenItems([]);
     },[]);
     const expandAll = () => {
-        console.log('expandAll');
         const items = data.filter(gr => gr.itemType === 'branch').map(gr => gr.value);
         setOpenItems(items);
     };
 
    
     const onFilterTextChange = (filter:string) => {
-        console.log('filter text: '+filter);
         setFilterText(filter);
     }
     return (
@@ -133,24 +130,27 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelected
             </DialogTrigger>
         <DialogSurface className={styles.dialogContainer}>
         <DialogBody className={styles.dialogBody}>
-        <DialogTitle>Select a record</DialogTitle>
+        <DialogTitle>{powerAppsService.controlLabels.dialogTitle}</DialogTitle>
         <DialogContent style={{height:'100%',position:'relative'}} >
         <div className={styles.advancedSectionContainer}>
-            <ViewSelector disabled={!powerAppsService.isViewPickerEnabled} views={views} entityName={entityType} onViewChange={setCurrentView}/>
+            <ViewSelector defaultText={powerAppsService.controlLabels.defaultViewText} disabled={!powerAppsService.isViewPickerEnabled} views={views} entityName={entityType} onViewChange={setCurrentView}/>
             
-            <SearchTextBox onChangeText={onFilterTextChange} />
+            <SearchTextBox onChangeText={onFilterTextChange} LabelText={powerAppsService.controlLabels.searchInputText} />
         </div>
         <div className={styles.treeBar}>
             <Button appearance="subtle" onClick={expandAll} icon={ <AddSquareRegular />}>
-                Expand All
+                {powerAppsService.controlLabels.expandBtn}
             </Button>
             <Button appearance="subtle" onClick={collapseAll} icon={ <SubtractSquareRegular />}>
-                Collapse All
+            {powerAppsService.controlLabels.collapseBtn}
             </Button>
         </div>
 
-        {error ? <ErrorMessageBar error={error} /> : isDataLoading || !entityMetadata ? 
-         <Spinner appearance="primary" label="Loading data..." /> : 
+        {error ? <ErrorMessageBar
+         title={powerAppsService.controlLabels.errorPopupTitle} 
+         defaultMessage={powerAppsService.controlLabels.defaultErrorText} 
+         error={error} /> : isDataLoading || !entityMetadata ? 
+         <Spinner appearance="primary" label={powerAppsService.controlLabels.loadingText} /> : 
             <PowerAppsTree
              groupedRecords={data}
               entityMetadata={entityMetadata} 
@@ -163,15 +163,15 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelected
         </DialogContent>
         <DialogActions style={{gridColumn:'1/-1',justifySelf:'normal'} } fluid={true}>
         <Field style={{width:'100%',display:'flex'}} className={styles.field} orientation="horizontal"
-                label="Current selected record">{selectedRecord !== undefined && selectedRecord !== null && entityMetadata &&
+                label={powerAppsService.controlLabels.currentRecordLabel}>{selectedRecord !== undefined && selectedRecord !== null && entityMetadata &&
                     <RecordTag entityMetadata={entityMetadata} style={{marginTop:'2px'}} onTagClick={powerAppsService.openRecord.bind(powerAppsService)} recordLookup={selectedRecord} isUnderline={true} />
                 
              }</Field>
             <DialogTrigger>
-                <Button disabled={!selectedValue} onClick={onSelectClick} appearance="primary">Select</Button>
+                <Button disabled={!selectedValue} onClick={onSelectClick} appearance="primary">{powerAppsService.controlLabels.selectBtn}</Button>
             </DialogTrigger>
             <DialogTrigger disableButtonEnhancement>
-            <Button appearance="secondary">Cancel</Button>
+            <Button appearance="secondary">{powerAppsService.controlLabels.cancelBtn}</Button>
             </DialogTrigger>
         </DialogActions>
         </DialogBody>

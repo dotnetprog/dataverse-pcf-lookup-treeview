@@ -62,5 +62,5 @@ export const PowerAppsTree:React.FC<PowerAppsTreeProps> = (props) => {
                     </FlatTreeItem>
                     );
                 })}
-                </FlatTree> : <div className={styles.nodataContainer}><Text>No records found</Text></div>)
+                </FlatTree> : <div className={styles.nodataContainer}><Text>{powerAppsService.controlLabels.noRecordFound}</Text></div>)
 }

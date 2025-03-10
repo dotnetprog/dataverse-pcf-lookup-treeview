@@ -26,7 +26,7 @@ export function useTreeData(viewid:string | undefined,filterText:string,isOpened
           };
     useEffect(() => {
 
-      fetchData().catch(e => setError(e)).finally(() => setIsDataLoading(false));
+      fetchData().catch(e => setError(e)).finally(() => setIsDataLoading(false)).catch(() => null);
 
     },[viewid,filterText,isOpened]);
     return {

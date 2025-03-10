@@ -37,7 +37,8 @@ type IViewSelectorProps = {
     entityName:string;
     onViewChange:(view:LookupView)=>void;
     views:LookupView[],
-    disabled:boolean
+    disabled:boolean,
+    defaultText:string
 };
 
 const ViewSelector:React.FC<IViewSelectorProps> =  (props)  => {
@@ -51,7 +52,7 @@ const ViewSelector:React.FC<IViewSelectorProps> =  (props)  => {
     };
     return(<div className={styles.field}>
         <Select defaultValue={defaultview?.viewId} disabled={props.disabled} onChange={onChange} id={`${selectId}-underline`} appearance="outline">
-          {props.views.map((v) => (<option key={v.viewId} value={v.viewId}>{v.viewName} {v.isDefault && "(Default)"}</option>) )}
+          {props.views.map((v) => (<option key={v.viewId} value={v.viewId}>{v.viewName} {v.isDefault && `(${props.defaultText})`}</option>) )}
         </Select>
       </div>)
 };

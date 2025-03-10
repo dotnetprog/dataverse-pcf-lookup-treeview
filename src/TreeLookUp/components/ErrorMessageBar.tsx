@@ -5,8 +5,10 @@ import * as React from "react";
 
 export type ErrorMessageBarProps = {
     error:any;
+    title:string;
+    defaultMessage:string
 }
-const getErrorText = (error:any):string => {
+const getErrorText = (error:any,defaultMessage:string):string => {
     const errorType = typeof error;
     if(error instanceof TypeError){
         return error.message + '\n\t' + error.stack;
@@ -17,15 +19,15 @@ const getErrorText = (error:any):string => {
         case 'object':
             return JSON.stringify(error);
         default:
-            return 'Unknown error';
+            return defaultMessage;
     }
 }
-export const ErrorMessageBar:React.FC<ErrorMessageBarProps> = ({error})=>{
+export const ErrorMessageBar:React.FC<ErrorMessageBarProps> = ({error,title,defaultMessage})=>{
     
-    const errorText = getErrorText(error);
+    const errorText = getErrorText(error,defaultMessage);
     return ( <MessageBar intent="error">
         <MessageBarBody >
-          <MessageBarTitle >An error has occured</MessageBarTitle>
+          <MessageBarTitle >{title}</MessageBarTitle>
           <div style={{whiteSpace:'pre-wrap'}}>{errorText}</div>
         </MessageBarBody>
       </MessageBar>)

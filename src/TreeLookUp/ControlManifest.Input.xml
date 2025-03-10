@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="FDNTechsolution" constructor="TreeLookUp" version="0.0.4" display-name-key="TreeLookUp" description-key="TreeLookUp description" control-type="virtual" >
+  <control namespace="FDNTechsolution" constructor="TreeLookUp" version="0.0.5" display-name-key="TreeLookUp" description-key="TreeLookUp description" control-type="virtual" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -34,6 +34,8 @@
     -->
     <resources>
       <code path="index.ts" order="1"/>
+      <resx path="strings/TreeLookUp.1036.resx" version="1.0.1" />
+      <resx path="strings/TreeLookUp.1033.resx" version="1.0.1" />
       <platform-library name="React" version="16.14.0" />
       <platform-library name="Fluent" version="9.46.2" />
       <!-- UNCOMMENT TO ADD MORE RESOURCES

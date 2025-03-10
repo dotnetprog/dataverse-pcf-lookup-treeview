@@ -5,6 +5,7 @@ import { CachedEntityMetadataService, IEntityMetadataService } from "./entityMet
 import { PowerAppsTreeItemService } from "./PowerAppsTreeItemService";
 import { ContextRecordService, IRecordService } from "./recordService";
 import { CachedViewService, IViewService } from "./viewService";
+import { ControlLabels } from "../ControlLabels";
 
 export type IPowerAppsContextServiceProps = {
     context: ComponentFramework.Context<IInputs>;
@@ -29,11 +30,14 @@ export class PowerAppsContextService {
     noValueLabel = "(none)";
     isViewPickerEnabled:boolean;
     mainLookupEntityName:string;
+    controlLabels:ControlLabels;
     onChange: (selectedOption?: ComponentFramework.LookupValue) => void;
     constructor(props:IPowerAppsContextServiceProps){
 
         if(!props){ return; }
         this.context = props.context;
+        this.controlLabels = this.getControlLabels();
+        this.noValueLabel = `(${this.controlLabels.noData})`;
         this.mainLookupEntityName = this.context.parameters.MainLookUp.getTargetEntityType();
         this.isViewPickerEnabled = (this.context.parameters.MainLookUp as any).enableViewPicker ?? true;
         this.metadataService = new CachedEntityMetadataService(this.context.utils);
@@ -105,6 +109,23 @@ export class PowerAppsContextService {
     getFormattedField (field:string,entityMetadata:ComponentFramework.PropertyHelper.EntityMetadata) {
         const amd = entityMetadata.Attributes.getByName(field);
         return this.getFormattedSuffix(field,amd);
+    }
+    private getControlLabels():ControlLabels{
+        return {
+            selectBtn:this.context.resources.getString("SelectBtn"),
+            loadingText:this.context.resources.getString("LoadingText"),
+            errorPopupTitle:this.context.resources.getString("ErrorPopupTitle"),
+            noData:this.context.resources.getString("NoData"),
+            dialogTitle:this.context.resources.getString("DialogTitle"),
+            searchInputText:this.context.resources.getString("SearchInputLabel"),
+            currentRecordLabel:this.context.resources.getString("CurrentRecordLabel"),
+            cancelBtn:this.context.resources.getString('CancelBtn'),
+            expandBtn:this.context.resources.getString('ExpandBtn'),
+            collapseBtn:this.context.resources.getString('CollapseBtn'),
+            defaultViewText:this.context.resources.getString('DefaultViewText'),
+            noRecordFound:this.context.resources.getString('NoRecordFound'),
+            defaultErrorText:this.context.resources.getString('DefaultErrorText')
+        }
     }
     private getFormattedSuffix(property:string,amd:any){
         switch(amd.AttributeType){

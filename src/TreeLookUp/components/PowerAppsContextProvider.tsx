@@ -1,6 +1,5 @@
 import * as React from "react";
-import { createContext, ReactNode, useContext, useState } from "react";
-import { IInputs } from "../generated/ManifestTypes";
+import { createContext, ReactNode, useContext } from "react";
 import { PowerAppsContextService } from "../services/PowerAppsContextService";
 const PowerAppsContext = createContext<PowerAppsContextService>(undefined!);
 interface PowerAppsContextProviderProps {
