@@ -16,8 +16,8 @@ Virtual PowerApps Component framework (PCF) Control that renders a Lookup that a
 :heavy_check_mark: Allow users to filter the tree by keywords (Search Text box) \
 :heavy_check_mark: GroupBy supports usage of field from a lookup field. ex: lookupfield.field \
 :heavy_check_mark: Display the first two columns of the current selected view as secondary text on the record tags in the tree view. \
-:heavy_check_mark: Tree view works even if group by field are not part of the selected view. \
 ![image](/docs/secondarytextlookup.png) \
+:heavy_check_mark: Tree view works even if group by field are not part of the selected view. \
 :heavy_check_mark: GroupBy supports Columns Types:
 - Text (string)
 - Numeric (Integer,Decimal,Money)
