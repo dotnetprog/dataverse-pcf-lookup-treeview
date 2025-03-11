@@ -1,13 +1,13 @@
-# PowerApps Compoenent Framework: TreeLookup
+# 🚀 PowerApps Component Framework: TreeLookup 🔎
 Virtual PowerApps Component framework (PCF) Control that renders a Lookup that allows to select value from a tree view.
  
-**IMPORTANT : The control needs to be configured using the Classic UI see issue [#29](https://github.com/drivardxrm/LookupDropdown.PCF/issues/29) for more info** 
+⚠️**IMPORTANT : The control needs to be configured using the Classic UI see issue [#29](https://github.com/drivardxrm/LookupDropdown.PCF/issues/29) for more info**⚠️ 
 
 <ins>Credits: Some features was inspired by [LookupDropdown.PCF](https://github.com/drivardxrm/LookupDropdown.PCF) by [David Rivard](https://github.com/drivardxrm)</ins>
 
 ![demo](/docs/recordemo.gif)
 
-## Features
+## ⭐Features⭐
 
 :heavy_check_mark: Out of the box related records filtering configuration \
 ![image](/docs/relatedrecordsfiltering.png) \
@@ -36,7 +36,7 @@ Virtual PowerApps Component framework (PCF) Control that renders a Lookup that a
 ❌ Does not support pagination (yet? Contributions are welcomed), only the first 5000 records will show.
 
 
-## Dos and Don'ts
+## Dos :heavy_check_mark: and Don'ts❌
 :heavy_check_mark: dos:
  - Ideal for small to medium dataset
  - OptionSet and lookups are best column types for grouping your datasets
@@ -50,7 +50,7 @@ Virtual PowerApps Component framework (PCF) Control that renders a Lookup that a
  - Do not use this pcf for large dataset selection as it will only show up to the first 5000 records.
 
 
-## Configuration
+## ⚙️Configuration⚙️
 
 | Configuration Name  | Description | Example |
 | ------------- | ------------- |------------- |
