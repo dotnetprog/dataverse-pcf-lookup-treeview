@@ -1,6 +1,8 @@
 # 🚀 PowerApps Component Framework: TreeLookup 🔎
 Virtual PowerApps Component framework (PCF) Control that renders a Lookup that allows to select value from a tree view.
- 
+
+Get Managed/Unmanaged solution from latest [release](https://github.com/dotnetprog/dataverse-pcf-lookup-treeview/releases/latest)
+
 ⚠️**IMPORTANT : The control needs to be configured using the Classic UI see issue [#29](https://github.com/drivardxrm/LookupDropdown.PCF/issues/29) for more info**⚠️ 
 
 <ins>Credits: Some features was inspired by [LookupDropdown.PCF](https://github.com/drivardxrm/LookupDropdown.PCF) by [David Rivard](https://github.com/drivardxrm)</ins>
