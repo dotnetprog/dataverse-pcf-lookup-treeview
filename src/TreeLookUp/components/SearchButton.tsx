@@ -95,7 +95,9 @@ export const SearchButton:React.FC<SearchButtonProps> = ({ entityType,onSelected
     } 
     useEffect(() => {
         if(isDataLoading) return;
-        setOpenItems(data.filter(t => t.itemType === "branch").map(t=> t.value));//Always open all branches by default
+        const openedItems = powerAppsService.defaultTreeState === "0" ?
+            data.filter(t => t.itemType === "branch").map(t=> t.value) : [];
+        setOpenItems(openedItems);//Always open all branches by default
     },[isDataLoading])
     useEffect(() => {
         if(isViewLoading || views.length === 0){

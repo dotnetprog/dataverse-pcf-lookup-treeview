@@ -59,6 +59,7 @@ Get Managed/Unmanaged solution from latest [release](https://github.com/dotnetpr
 | Main LookUp | Lookup field to bound the PCF to  | fdn_insuranceproductid |
 | Group By  | Comma seperated logical **lowercase** attribute names to group the search results by.<br/>Supports related lookup fields.  | fdn_insurancesubcategory.fdn_insurancecategory,<br/>fdn_insurancesubcategory  |
 | Dependent Lookup field | When dependent filtering is configured , must bound this configuration with the dependant lookup field | createdby  |
+| Default Tree State | Incidates the default state of the tree when data has loaded. | Expanded or Collapsed  |
 
 Example: \
 ![image](/docs/TreeLookupConfig.png)
