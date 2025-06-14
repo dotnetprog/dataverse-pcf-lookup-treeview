@@ -18,6 +18,7 @@ export class PowerAppsContextService {
     context: ComponentFramework.Context<IInputs>;
     selectedValue?:ComponentFramework.LookupValue;
     dependentValue?:ComponentFramework.LookupValue;
+    defaultTreeState: "0" | "1";
     dependentEntityName:string;
     filterRelationshipName:string;
     isReadOnly:boolean;
@@ -40,6 +41,7 @@ export class PowerAppsContextService {
         this.noValueLabel = `(${this.controlLabels.noData})`;
         this.mainLookupEntityName = this.context.parameters.MainLookUp.getTargetEntityType();
         this.isViewPickerEnabled = (this.context.parameters.MainLookUp as any).enableViewPicker ?? true;
+        this.defaultTreeState = this.context.parameters.DefaultTreeState.raw ?? "0";
         this.metadataService = new CachedEntityMetadataService(this.context.utils);
         this.recordService = new ContextRecordService(this.context.webAPI);
         this.viewService = new CachedViewService(this.context.webAPI);
